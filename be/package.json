@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,7 +16,6 @@
     "express": "^5.1.0",
     "mongoose": "^8.18.2",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1",
-    "start": "node index.js"
+    "swagger-ui-express": "^5.0.1"
   }
 }
