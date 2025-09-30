@@ -5,6 +5,9 @@ const swaggerJsDoc = require('swagger-jsdoc');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Middleware
+app.use(express.json());
+
 // Swagger config
 const swaggerOptions = {
   definition: {
@@ -27,15 +30,68 @@ app.get('/', (req, res) => {
 
 /**
  * @swagger
- * /hello:
- *   get:
- *     summary: Hello world endpoint
+ * /api/login:
+ *   post:
+ *     summary: User login endpoint
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 example: password123
  *     responses:
  *       200:
- *         description: Success
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 token:
+ *                   type: string
+ *       401:
+ *         description: Invalid credentials
  */
-app.get('/hello', (req, res) => {
-  res.json({ message: 'Hello from Swagger API!' });
+app.post('/api/login', (req, res) => {
+  const { email, password } = req.body;
+
+  // Basic validation
+  if (!email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: 'Email and password are required'
+    });
+  }
+
+  // TODO: Add database authentication logic
+  // For now, this is a mock response
+  if (email === 'user@example.com' && password === 'password123') {
+    res.json({
+      success: true,
+      message: 'Login successful',
+      token: 'mock-jwt-token-here'
+    });
+  } else {
+    res.status(401).json({
+      success: false,
+      message: 'Invalid credentials'
+    });
+  }
 });
 
 app.listen(PORT, () => {
