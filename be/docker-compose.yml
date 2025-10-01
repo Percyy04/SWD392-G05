@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db_swd329
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: '*******'            # mk root
+      MYSQL_DATABASE: project_db        # ten db - cai nay test
+      MYSQL_USER: student               # user nhom
+      MYSQL_PASSWORD: '*******'            # mk nhom
+    ports:
+      - "3306:3306"                     #  port MySQL
+    volumes:
+      - ./mysql_data:/var/lib/mysql     #  container
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - db_network
+
+networks:
+  db_network:
+    driver: bridge
