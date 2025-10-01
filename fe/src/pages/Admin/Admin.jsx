@@ -1,40 +1,44 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+// eslint-disable-next-line no-unused-vars
+import { motion } from "framer-motion"
 import {
   Layout,
   Menu,
   Card,
   Table,
+  Tag,
   Button,
   Badge,
   Dropdown,
+  Modal,
   Form,
   Input,
+  Select,
   message,
   Avatar,
-  Tag,
+  Tabs,
 } from "antd"
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  SearchOutlined,
-  PlusOutlined,
-  ClockCircleOutlined,
-  MoreOutlined,
+  DashboardOutlined,
+  TeamOutlined,
+  UserOutlined,
+  FileTextOutlined,
+  SettingOutlined,
   CheckCircleOutlined,
+  ClockCircleOutlined,
   CloseCircleOutlined,
+  MoreOutlined,
+  PlusOutlined,
+  SearchOutlined,
 } from "@ant-design/icons"
-
-
-import StatsCard from "../../components/admin/StatsCard"
-import RecentActivity from "../../components/admin/RecentActivity"
-import CreateTeamModal from "../../components/admin/CreateTeamModal"
-import Settings from "../../components/admin/Settings"
-import { DashboardOutlined, TeamOutlined, UserOutlined, FileTextOutlined, SettingOutlined } from "@ant-design/icons"
-import { Users, UserCheck, Clock, AlertCircle } from "lucide-react"
+import { TrendingUp } from "lucide-react"
 
 const { Header, Sider, Content } = Layout
+const { TabPane } = Tabs
 
 export default function Admin() {
   const [collapsed, setCollapsed] = useState(false)
@@ -42,124 +46,55 @@ export default function Admin() {
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [form] = Form.useForm()
 
-  // Mock data
-  const statsData = [
-    { title: "Total Teams", value: 24, icon: <Users className="w-6 h-6" />, color: "bg-blue-500", change: "+12%" },
-    {
-      title: "Active Students",
-      value: 156,
-      icon: <UserCheck className="w-6 h-6" />,
-      color: "bg-green-500",
-      change: "+8%",
-    },
-    { title: "Pending Requests", value: 8, icon: <Clock className="w-6 h-6" />, color: "bg-yellow-500", change: "+3" },
-    { title: "Issues", value: 2, icon: <AlertCircle className="w-6 h-6" />, color: "bg-red-500", change: "-2" },
-  ]
+  const statsData = []
 
-  const teamsData = [
-    {
-      key: "1",
-      teamName: "Team Alpha",
-      leader: "Nguyen Van A",
-      members: 5,
-      status: "active",
-      major: "Software Engineering",
-      createdAt: "2025-01-15",
-    },
-    {
-      key: "2",
-      teamName: "Team Beta",
-      leader: "Tran Thi B",
-      members: 4,
-      status: "voting",
-      major: "Software Engineering",
-      createdAt: "2025-01-18",
-    },
-    {
-      key: "3",
-      teamName: "Team Gamma",
-      leader: "Le Van C",
-      members: 6,
-      status: "locked",
-      major: "Information Systems",
-      createdAt: "2025-01-10",
-    },
-    {
-      key: "4",
-      teamName: "Team Delta",
-      leader: null,
-      members: 3,
-      status: "open",
-      major: "Software Engineering",
-      createdAt: "2025-01-20",
-    },
-  ]
+  const teamsData = []
 
-  const pendingRequestsData = [
-    {
-      key: "1",
-      student: "Pham Van D",
-      type: "Join Request",
-      team: "Team Alpha",
-      reason: "Want to join as Backend Developer",
-      date: "2025-01-25",
-    },
-    {
-      key: "2",
-      student: "Hoang Thi E",
-      type: "Transfer Request",
-      team: "Team Beta → Team Gamma",
-      reason: "Better skill match",
-      date: "2025-01-24",
-    },
-    {
-      key: "3",
-      student: "Vo Van F",
-      type: "Leave Request",
-      team: "Team Delta",
-      reason: "Personal reasons",
-      date: "2025-01-23",
-    },
-  ]
+  const pendingRequestsData = []
 
-  const studentsData = [
-    {
-      key: "1",
-      name: "Nguyen Van A",
-      email: "nguyenvana@fpt.edu.vn",
-      major: "Software Engineering",
-      team: "Team Alpha",
-      role: "Leader",
-      status: "active",
-    },
-    {
-      key: "2",
-      name: "Tran Thi B",
-      email: "tranthib@fpt.edu.vn",
-      major: "Software Engineering",
-      team: "Team Beta",
-      role: "Leader",
-      status: "active",
-    },
-    {
-      key: "3",
-      name: "Le Van C",
-      email: "levanc@fpt.edu.vn",
-      major: "Information Systems",
-      team: "Team Gamma",
-      role: "Leader",
-      status: "active",
-    },
-    {
-      key: "4",
-      name: "Pham Van D",
-      email: "phamvand@fpt.edu.vn",
-      major: "Software Engineering",
-      team: null,
-      role: null,
-      status: "pending",
-    },
-  ]
+  const [studentsData, setStudentsData] = useState([])
+  const [studentsLoading, setStudentsLoading] = useState(false)
+  const [studentsError, setStudentsError] = useState(null)
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      setStudentsLoading(true)
+      setStudentsError(null)
+      try {
+        const response = await fetch("http://localhost:5000/api/students")
+        const data = await response.json()
+
+        if (data.success) {
+          // Transform API data to match table format
+          const transformedData = data.students.map((student, index) => ({
+            key: student.id || index,
+            id: student.id,
+            name: student.full_name,
+            email: student.email,
+            major: "-", // Not provided by API
+            team: null, // Not provided by API
+            role: null, // Not provided by API
+            status: "active", // Default status
+          }))
+          setStudentsData(transformedData)
+        } else {
+          setStudentsError("Failed to load students")
+          message.error("Failed to load students")
+        }
+      } catch (error) {
+        console.error("[v0] Error fetching students:", error)
+        setStudentsError("Error connecting to server")
+        message.error("Error loading students data")
+      } finally {
+        setStudentsLoading(false)
+      }
+    }
+
+    // Fetch students when Students menu is selected
+    if (selectedMenu === "3") {
+      fetchStudents()
+    }
+  }, [selectedMenu])
 
   const menuItems = [
     {
@@ -253,6 +188,74 @@ export default function Admin() {
     },
   ]
 
+  const studentsColumns = [
+    {
+      title: "ID",
+      dataIndex: "id",
+      key: "id",
+      render: (text) => <span className="text-gray-900 font-mono">{text}</span>,
+    },
+    {
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
+      render: (text) => (
+        <div className="flex items-center gap-2">
+          <Avatar size="small">{text ? text[0] : "?"}</Avatar>
+          <span className="text-gray-900">{text}</span>
+        </div>
+      ),
+    },
+    {
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
+    },
+    {
+      title: "Major",
+      dataIndex: "major",
+      key: "major",
+      render: (major) => major || <span className="text-gray-400">Not set</span>,
+    },
+    {
+      title: "Team",
+      dataIndex: "team",
+      key: "team",
+      render: (team) => team || <span className="text-gray-400">No team</span>,
+    },
+    {
+      title: "Role",
+      dataIndex: "role",
+      key: "role",
+      render: (role) => (role ? <Tag color="blue">{role}</Tag> : <span className="text-gray-400">-</span>),
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => (
+        <Tag color={status === "active" ? "green" : "orange"}>{status === "active" ? "Active" : "Pending"}</Tag>
+      ),
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: () => (
+        <Dropdown
+          menu={{
+            items: [
+              { key: "1", label: "View Profile" },
+              { key: "2", label: "Assign to Team" },
+              { key: "3", label: "Remove", danger: true },
+            ],
+          }}
+        >
+          <Button type="text" icon={<MoreOutlined />} />
+        </Dropdown>
+      ),
+    },
+  ]
+
   const requestsColumns = [
     {
       title: "Student",
@@ -315,67 +318,6 @@ export default function Admin() {
     },
   ]
 
-  const studentsColumns = [
-    {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
-      render: (text) => (
-        <div className="flex items-center gap-2">
-          <Avatar size="small">{text[0]}</Avatar>
-          <span className="text-gray-900">{text}</span>
-        </div>
-      ),
-    },
-    {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
-    },
-    {
-      title: "Major",
-      dataIndex: "major",
-      key: "major",
-    },
-    {
-      title: "Team",
-      dataIndex: "team",
-      key: "team",
-      render: (team) => team || <span className="text-gray-400">No team</span>,
-    },
-    {
-      title: "Role",
-      dataIndex: "role",
-      key: "role",
-      render: (role) => (role ? <Tag color="blue">{role}</Tag> : "-"),
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => (
-        <Tag color={status === "active" ? "green" : "orange"}>{status === "active" ? "Active" : "Pending"}</Tag>
-      ),
-    },
-    {
-      title: "Action",
-      key: "action",
-      render: () => (
-        <Dropdown
-          menu={{
-            items: [
-              { key: "1", label: "View Profile" },
-              { key: "2", label: "Assign to Team" },
-              { key: "3", label: "Remove", danger: true },
-            ],
-          }}
-        >
-          <Button type="text" icon={<MoreOutlined />} />
-        </Dropdown>
-      ),
-    },
-  ]
-
   const handleCreateTeam = () => {
     setIsModalVisible(true)
   }
@@ -399,12 +341,41 @@ export default function Admin() {
       case "1":
         return (
           <div className="space-y-6">
+            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {statsData.map((stat, index) => (
-                <StatsCard key={index} stat={stat} index={index} />
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card className="bg-white border-gray-200 hover:border-green-500 transition-all duration-300 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-gray-600 text-sm mb-1">{stat.title}</p>
+                        <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                        <p className="text-green-500 text-sm mt-1 flex items-center gap-1">
+                          <TrendingUp className="w-4 h-4" />
+                          {stat.change}
+                        </p>
+                      </div>
+                      <div className={`${stat.color} p-3 rounded-lg text-white`}>{stat.icon}</div>
+                    </div>
+                  </Card>
+                </motion.div>
               ))}
             </div>
-            <RecentActivity />
+
+            {/* Recent Activity */}
+            <Card
+              title={<span className="text-gray-900 font-semibold">Recent Activity</span>}
+              className="bg-white border-gray-200 shadow-sm"
+            >
+              <div className="space-y-4">
+                <p className="text-gray-500 text-center py-8">No recent activity</p>
+              </div>
+            </Card>
           </div>
         )
       case "2":
@@ -441,8 +412,25 @@ export default function Admin() {
             <Table
               columns={studentsColumns}
               dataSource={studentsData}
+              loading={studentsLoading}
               className="custom-table"
               pagination={{ pageSize: 10 }}
+              locale={{
+                emptyText: studentsError ? (
+                  <div className="text-center py-8">
+                    <p className="text-red-500 mb-2">{studentsError}</p>
+                    <Button
+                      type="primary"
+                      onClick={() => setSelectedMenu("3")}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                ) : (
+                  "No students found"
+                ),
+              }}
             />
           </Card>
         )
@@ -462,7 +450,37 @@ export default function Admin() {
           </Card>
         )
       case "5":
-        return <Settings />
+        return (
+          <Card
+            title={<span className="text-gray-900 font-semibold">Settings</span>}
+            className="bg-white border-gray-200 shadow-sm"
+          >
+            <Tabs defaultActiveKey="1">
+              <TabPane tab="General" key="1">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-gray-900 block mb-2">Course Name</label>
+                    <Input defaultValue="EXE101" />
+                  </div>
+                  <div>
+                    <label className="text-gray-900 block mb-2">Semester</label>
+                    <Select defaultValue="Spring 2025" className="w-full">
+                      <Select.Option value="Spring 2025">Spring 2025</Select.Option>
+                      <Select.Option value="Fall 2024">Fall 2024</Select.Option>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-gray-900 block mb-2">Max Team Size</label>
+                    <Input type="number" defaultValue="6" />
+                  </div>
+                </div>
+              </TabPane>
+              <TabPane tab="Permissions" key="2">
+                <p className="text-gray-600">Permission settings coming soon...</p>
+              </TabPane>
+            </Tabs>
+          </Card>
+        )
       default:
         return null
     }
@@ -501,7 +519,7 @@ export default function Admin() {
             className="text-gray-900 text-lg w-16 h-16"
           />
           <div className="flex items-center gap-4">
-            <Badge count={8} offset={[-5, 5]}>
+            <Badge count={pendingRequestsData.length} offset={[-5, 5]}>
               <Button type="text" icon={<ClockCircleOutlined className="text-gray-900 text-lg" />} />
             </Badge>
             <Dropdown
@@ -520,12 +538,44 @@ export default function Admin() {
         <Content className="m-6 p-6 bg-gray-50 rounded-lg min-h-[calc(100vh-88px)]">{renderContent()}</Content>
       </Layout>
 
-      <CreateTeamModal
-        isVisible={isModalVisible}
+      {/* Create Team Modal */}
+      <Modal
+        title={<span className="text-gray-900">Create New Team</span>}
+        open={isModalVisible}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
-        form={form}
-      />
+        okText="Create"
+        okButtonProps={{ className: "bg-green-600 hover:bg-green-700" }}
+        className="light-modal"
+      >
+        <Form form={form} layout="vertical" className="mt-4">
+          <Form.Item
+            name="teamName"
+            label={<span className="text-gray-900">Team Name</span>}
+            rules={[{ required: true, message: "Please input team name!" }]}
+          >
+            <Input placeholder="Enter team name" />
+          </Form.Item>
+          <Form.Item
+            name="major"
+            label={<span className="text-gray-900">Major</span>}
+            rules={[{ required: true, message: "Please select major!" }]}
+          >
+            <Select placeholder="Select major">
+              <Select.Option value="SE">Software Engineering</Select.Option>
+              <Select.Option value="IS">Information Systems</Select.Option>
+              <Select.Option value="AI">Artificial Intelligence</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="maxMembers"
+            label={<span className="text-gray-900">Max Members</span>}
+            rules={[{ required: true, message: "Please input max members!" }]}
+          >
+            <Input type="number" placeholder="Enter max members" defaultValue="6" />
+          </Form.Item>
+        </Form>
+      </Modal>
 
       <style jsx global>{`
         .ant-layout {

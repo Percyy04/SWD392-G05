@@ -1,24 +1,45 @@
 import { useState } from "react"
 import { Form, Input, Button, Checkbox, message } from "antd"
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion"
 import { Mail, Lock, User, Github, Chrome, Apple, Shield } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 
 const SignUp = () => {
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
-  const onFinish = (values) => {
+  const onFinish = async (values) => {
     setLoading(true)
-    console.log("SignUp values:", values)
+    try {
+      const res = await fetch("http://localhost:5000/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          full_name: values.fullname,
+          email: values.email,
+          password: values.password,
+        }),
+      })
 
-    setTimeout(() => {
-      setLoading(false)
-      if (values.email && values.password) {
+      const data = await res.json()
+
+      if (res.ok && data.success) {
         message.success("Account created successfully!")
+        setTimeout(() => {
+          navigate("/") // điều hướng về login
+        }, 1000)
       } else {
-        message.error("Please fill all required fields")
+        message.error(data.message || "Failed to create account")
       }
-    }, 1000)
+    } catch (err) {
+      console.error("SignUp error:", err)
+      message.error("Server error. Please try again later.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSocialLogin = (provider) => {
@@ -144,7 +165,16 @@ const SignUp = () => {
                 />
               </Form.Item>
 
-              <Form.Item name="agreement" valuePropName="checked" rules={[{ required: true }]}>
+              <Form.Item
+                name="agreement"
+                valuePropName="checked"
+                rules={[
+                  {
+                    validator: (_, value) =>
+                      value ? Promise.resolve() : Promise.reject(new Error("You must accept the agreement")),
+                  },
+                ]}
+              >
                 <Checkbox>
                   I agree to the{" "}
                   <a href="#" className="text-blue-600 hover:underline">
