@@ -9,38 +9,89 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
+  // const onFinish = async (values) => {
+  //   setLoading(true)
+  //   try {
+  //     const response = await fetch("https://swd392-g05.onrender.com/api/login", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify(values),
+  //     })
+
+  //     const data = await response.json()
+
+  //     if (response.ok && data.success) {
+  //       message.success(data.message || "Login successful")
+
+  //       // ✅ Lưu token + user vào localStorage
+  //       localStorage.setItem("token", data.token)
+  //       localStorage.setItem("user", JSON.stringify(data.user))
+
+  //       // ✅ redirect
+  //       navigate("/admin")
+  //     } else {
+  //       message.error(data.message || "Invalid email or password")
+  //     }
+  //   } catch (error) {
+  //     console.error("Login error:", error)
+  //     message.error("Network error. Please try again later.")
+  //   } finally {
+  //     setLoading(false)
+  //   }
+  // }
+
   const onFinish = async (values) => {
-    setLoading(true)
-    try {
-      const response = await fetch("http://localhost:5000/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      })
+  setLoading(true)
+  try {
+    // ✅ Kiểm tra hardcode trước
+    if (
+      values.email === "admin123@gmail.com" &&
+      values.password === "123456"
+    ) {
+      message.success("Login successful (Hardcoded Admin)");
 
-      const data = await response.json()
+      // ✅ Lưu token fake + user vào localStorage
+      localStorage.setItem("token", "fake-admin-token");
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ email: values.email, role: "admin" })
+      );
 
-      if (response.ok && data.success) {
-        message.success(data.message || "Login successful")
-
-        // ✅ Lưu token + user vào localStorage
-        localStorage.setItem("token", data.token)
-        localStorage.setItem("user", JSON.stringify(data.user))
-
-        // ✅ redirect
-        navigate("/admin")
-      } else {
-        message.error(data.message || "Invalid email or password")
-      }
-    } catch (error) {
-      console.error("Login error:", error)
-      message.error("Network error. Please try again later.")
-    } finally {
-      setLoading(false)
+      navigate("/admin");
+      return;
     }
+
+    // ❌ Nếu không đúng hardcode → fallback gọi API thật
+    const response = await fetch("https://swd392-g05.onrender.com/api/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(values),
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
+      message.success(data.message || "Login successful");
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      navigate("/admin");
+    } else {
+      message.error(data.message || "Invalid email or password");
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    message.error("Network error. Please try again later.");
+  } finally {
+    setLoading(false);
   }
+};
+
 
   const handleSocialLogin = (provider) => {
     message.info(`Sign In with ${provider}`)
