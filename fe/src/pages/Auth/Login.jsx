@@ -1,24 +1,45 @@
 import { useState } from "react"
 import { Form, Input, Button, Checkbox, message } from "antd"
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion"
-import { Mail, Lock, Github, Chrome, Apple, Sparkles, Shield, Zap } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Mail, Lock, Github, Chrome, Apple, Shield } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
 
 const Login = () => {
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
-  const onFinish = (values) => {
+  const onFinish = async (values) => {
     setLoading(true)
-    console.log("Login values:", values)
+    try {
+      const response = await fetch("http://localhost:5000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      })
 
-    setTimeout(() => {
-      setLoading(false)
-      if (values.email === "admin@example.com" && values.password === "123456") {
-        message.success("Sign In successful!")
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        message.success(data.message || "Login successful")
+
+        // ✅ Lưu token + user vào localStorage
+        localStorage.setItem("token", data.token)
+        localStorage.setItem("user", JSON.stringify(data.user))
+
+        // ✅ redirect
+        navigate("/admin")
       } else {
-        message.error("Email or password is incorrect")
+        message.error(data.message || "Invalid email or password")
       }
-    }, 1000)
+    } catch (error) {
+      console.error("Login error:", error)
+      message.error("Network error. Please try again later.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSocialLogin = (provider) => {
@@ -34,8 +55,6 @@ const Login = () => {
           transition={{ duration: 0.5 }}
           className="w-full max-w-md"
         >
-         
-
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-blue-600 mb-2 flex items-center gap-2 whitespace-nowrap">
@@ -46,7 +65,7 @@ const Login = () => {
               <p className="text-gray-600">Please enter your information to continue</p>
             </div>
 
-              {/* may cai nut' */}
+            {/* Social login */}
             <div className="grid grid-cols-3 gap-3 mb-6">
               <button
                 onClick={() => handleSocialLogin("Google")}
@@ -73,11 +92,18 @@ const Login = () => {
                 <div className="w-full border-t border-gray-300"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">or sign in with your email</span>
+                <span className="px-4 bg-white text-gray-500">
+                  or sign in with your email
+                </span>
               </div>
             </div>
 
-            <Form name="login_form" layout="vertical" initialValues={{ remember: true }} onFinish={onFinish}>
+            <Form
+              name="login_form"
+              layout="vertical"
+              initialValues={{ remember: true }}
+              onFinish={onFinish}
+            >
               <Form.Item
                 label={<span className="text-gray-700 font-medium">Email</span>}
                 name="email"
@@ -89,7 +115,7 @@ const Login = () => {
               >
                 <Input
                   prefix={<Mail className="w-4 h-4 text-gray-400" />}
-                  placeholder="admin@example.com"
+                  placeholder="user@example.com"
                   size="large"
                   className="rounded-lg"
                 />
@@ -102,20 +128,23 @@ const Login = () => {
               >
                 <Input.Password
                   prefix={<Lock className="w-4 h-4 text-gray-400" />}
-                  placeholder="••••••••"
+                  placeholder="password123"
                   size="large"
                   className="rounded-lg"
                 />
               </Form.Item>
 
-             <div className="flex items-center justify-between mb-6">
-             <Form.Item name="remember" valuePropName="checked" className="mb-0">
-              <Checkbox>Remember me</Checkbox>
-             </Form.Item>
-              <Link to="/forget-password" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+              <div className="flex items-center justify-between mb-6">
+                <Form.Item name="remember" valuePropName="checked" className="mb-0">
+                  <Checkbox>Remember me</Checkbox>
+                </Form.Item>
+                <Link
+                  to="/forget-password"
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                >
                   Forgot password?
-              </Link>
-            </div>
+                </Link>
+              </div>
 
               <Form.Item className="mb-4">
                 <Button
@@ -131,23 +160,15 @@ const Login = () => {
 
               <div className="text-center text-sm text-gray-600">
                 Don't have an account?{" "}
-                <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-semibold">
+                <Link
+                  to="/signup"
+                  className="text-blue-600 hover:text-blue-700 font-semibold"
+                >
                   Sign up now
                 </Link>
               </div>
             </Form>
           </div>
-
-          <p className="text-center text-xs text-gray-500 mt-6">
-            By logging in, you agree to{" "}
-            <a href="#" className="text-blue-600 hover:underline">
-              Terms of Service
-            </a>{" "}
-            and{" "}
-            <a href="#" className="text-blue-600 hover:underline">
-              Privacy Policy
-            </a>
-          </p>
         </motion.div>
       </div>
     </div>
