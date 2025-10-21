@@ -6,10 +6,10 @@ services:
     container_name: mysql_db_swd329
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: 123456       # mk root
-      MYSQL_DATABASE: AI_Project        # ten db - cai nay test
+      MYSQL_ROOT_PASSWORD: '*******'            # mk root
+      MYSQL_DATABASE: project_db        # ten db - cai nay test
       MYSQL_USER: student               # user nhom
-      MYSQL_PASSWORD: 123456            # mk nhom
+      MYSQL_PASSWORD: '*******'            # mk nhom
     ports:
       - "3306:3306"                     #  port MySQL
     volumes:
