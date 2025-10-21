@@ -1,4 +1,6 @@
 import { Users, UserCheck, Clock, AlertCircle } from "lucide-react"
+import { DashboardOutlined, TeamOutlined, UserOutlined, FileTextOutlined, SettingOutlined } from "@ant-design/icons"
+
 
 export const statsData = [
   { title: "Total Teams", value: 24, icon: <Users className="w-6 h-6" />, color: "bg-blue-500", change: "+12%" },
@@ -137,5 +139,63 @@ export const menuItems = [
     key: "5",
     icon: <SettingOutlined />,
     label: "Settings",
+  },
+]
+
+export const leaderVotingData = [
+  {
+    key: "1",
+    teamName: "Team Beta",
+    candidates: ["Alice", "Bob", "Carol"],
+    votes: { Alice: 3, Bob: 2, Carol: 1 },
+    status: "voting",
+  },
+  {
+    key: "2",
+    teamName: "Team Epsilon",
+    candidates: ["David", "Eve"],
+    votes: { David: 2, Eve: 2 },
+    status: "voting",
+  },
+]
+
+export const postsData = [
+  {
+    key: "1",
+    title: "Team Formation Rules",
+    content: "Please follow the guidelines...",
+    groups: "All",
+    date: "2025-01-20",
+  },
+  {
+    key: "2",
+    title: "Deadline Extension",
+    content: "Project deadline extended to...",
+    groups: "SE, AI",
+    date: "2025-01-19",
+  },
+]
+
+export const suggestionsData = [
+  {
+    key: "1",
+    teamName: "Team Alpha",
+    matchScore: 95,
+    members: 4,
+    rolesNeeded: ["Backend", "Frontend"],
+  },
+  {
+    key: "2",
+    teamName: "Team Beta",
+    matchScore: 87,
+    members: 5,
+    rolesNeeded: ["DevOps"],
+  },
+  {
+    key: "3",
+    teamName: "Team Gamma",
+    matchScore: 78,
+    members: 3,
+    rolesNeeded: ["Frontend", "QA"],
   },
 ]

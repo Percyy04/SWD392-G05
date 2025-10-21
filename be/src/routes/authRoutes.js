@@ -20,39 +20,64 @@ const transporter = nodemailer.createTransport({
 });
 
 
-/**
- * @swagger
- * /api/register:
- *   post:
- *     summary: User registration endpoint
- *     tags: [Authentication]
- */
+// ================================
+// 🚀 Register Student (ENUM Role version)
 router.post('/register', async (req, res) => {
-  console.log("Register body:", req.body);  
-  const { maSV, email, password, full_name } = req.body;
+  console.log("Register body:", req.body);
 
-  if (!maSV || !email || !password || !full_name) {
+  const { maSV, email, password, full_name, major, status, role } = req.body;
+
+  // 🔹 Kiểm tra các trường bắt buộc
+  if (!maSV || !email || !password || !full_name || !major || !status) {
     return res.status(400).json({
       success: false,
-      message: 'maSV, email, password, and full_name are required',
+      message: 'maSV, email, password, full_name, major, and status are required',
     });
   }
 
   try {
     // 🔍 Kiểm tra trùng email hoặc mã SV
     const existingUser = await studentModel.findByEmail(email);
-    if (existingUser)
+    if (existingUser) {
       return res.status(400).json({ success: false, message: 'Email already exists' });
+    }
 
     const existingMaSV = await studentModel.findById(maSV);
-    if (existingMaSV)
+    if (existingMaSV) {
       return res.status(400).json({ success: false, message: 'Student ID already exists' });
+    }
 
     // 🔒 Mã hoá mật khẩu
     const hashed = await bcrypt.hash(password, 10);
 
+    // 🧩 Validate Role (nếu có)
+    const allowedRoles = ['Student', 'Leader', 'Admin'];
+    const safeRole = allowedRoles.includes(role) ? role : 'Student';
+
+    // 🔹 Log dữ liệu trước khi insert
+    console.log("Data to insert:", {
+      maSV,
+      email,
+      full_name,
+      password: '[hashed]',
+      role: safeRole,
+      major,
+      status,
+    });
+
     // 💾 Tạo sinh viên mới
-    const student = await studentModel.create({ maSV, email, password: hashed, full_name });
+    const student = await studentModel.create({
+      maSV,
+      email,
+      password: hashed,
+      full_name,
+      role: safeRole,
+      major,
+      team: null,
+      status,
+    });
+
+    console.log("✅ Created student:", student);
 
     return res.status(201).json({
       success: true,
@@ -60,13 +85,21 @@ router.post('/register', async (req, res) => {
       student,
     });
   } catch (err) {
-    console.error('Register error:', err);
+    console.error('❌ Register error:', err);
 
-    // ✅ Trả về chi tiết lỗi nếu MySQL error
+    // Xử lý lỗi SQL cụ thể
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({
+        success: false,
+        message: 'Email or Student ID already exists',
+      });
+    }
+
     const errorMsg = err.sqlMessage || err.message || 'Server error';
     return res.status(500).json({ success: false, message: errorMsg });
   }
 });
+
 
 /**
  * @swagger
@@ -78,31 +111,89 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
-  if (!email || !password)
-    return res.status(400).json({ success: false, message: 'Email and password are required' });
+  // 🔹 Kiểm tra đầu vào
+  if (!email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: 'Email and password are required',
+    });
+  }
 
   try {
+    // 🔍 Tìm user theo email
     const user = await studentModel.findByEmail(email);
-    if (!user)
-      return res.status(401).json({ success: false, message: 'Email not found' });
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Email not found',
+      });
+    }
 
-    const valid = await bcrypt.compare(password, user.MatKhau);
-    if (!valid)
-      return res.status(401).json({ success: false, message: 'Incorrect password' });
+    // 🔒 So sánh mật khẩu
+    const isMatch = await bcrypt.compare(password, user.MatKhau);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Incorrect password',
+      });
+    }
 
-    const token = generateToken({ id: user.MaSV, email: user.Email });
-    return res.json({
+    // 🧩 Xác định role hợp lệ từ DB ENUM
+    const allowedRoles = ['Student', 'Leader', 'Admin'];
+    const safeRole = allowedRoles.includes(user.Role) ? user.Role : 'Student';
+
+    // 🔑 Tạo payload cho JWT
+    const tokenPayload = {
+      id: user.MaSV,
+      email: user.Email,
+      role: safeRole,
+    };
+
+    console.log('🎫 Token payload:', tokenPayload);
+
+    // 🔐 Sinh token
+    const token = generateToken(tokenPayload);
+
+    // ✅ Trả về kết quả
+    return res.status(200).json({
       success: true,
       message: 'Login successful',
       token,
-      user: { maSV: user.MaSV, email: user.Email, full_name: user.HoTen },
+      user: {
+        maSV: user.MaSV,
+        email: user.Email,
+        full_name: user.HoTen,
+        role: safeRole,
+        major: user.Major,
+        team: user.Team,
+        status: user.Status,
+      },
     });
   } catch (err) {
-    console.error('Login error:', err);
+    console.error('❌ Login error:', err);
     const errorMsg = err.sqlMessage || err.message || 'Server error';
-    return res.status(500).json({ success: false, message: errorMsg });
+    return res.status(500).json({
+      success: false,
+      message: errorMsg,
+    });
   }
 });
+
+
+
+/**
+ * @swagger
+ * /api/logout:
+ *   post:
+ *     summary: Logout user (invalidate token on client side)
+ *     tags: [Authentication]
+ */
+router.post('/logout', (req, res) => {
+  // JWT là stateless, server không lưu token
+  // Frontend chỉ cần xóa token trên client
+  res.json({ success: true, message: 'Logout thành công. Vui lòng xóa token ở client.' });
+});
+
 
 
 /**

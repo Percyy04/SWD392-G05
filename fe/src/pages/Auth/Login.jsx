@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Mail, Lock, Github, Chrome, Apple, Shield } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
+import jwt_decode from "jwt-decode";
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -20,21 +21,41 @@ const Login = () => {
       });
 
       const data = await response.json();
+      console.log("Login response:", data);
 
       if (response.ok && data.success) {
-        toast.success(data.message || "🎉 Login successful");
-
-        // Lưu token + user
+        // ✅ Lưu token và user vào localStorage
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
 
-        navigate("/admin");
+        // ✅ Giải mã token để lấy role
+        const decoded = jwt_decode(data.token);
+        console.log("Decoded token:", decoded);
+
+        const role = decoded.role || "Student";
+
+        // ✅ Chuyển hướng dựa trên role
+        switch (role) {
+          case "Admin":
+            navigate("/admin");
+            break;
+          case "Leader":
+            navigate("/leader");
+            break;
+          case "Student":
+            navigate("/student");
+            break;
+          default:
+            navigate("/");
+        }
+
+        toast.success(data.message || "🎉 Login successful", { duration: 2000 });
       } else {
-        toast.error(data.message || "⚠️ Invalid email or password");
+        toast.error(data.message || "⚠️ Invalid email or password", { duration: 2000 });
       }
     } catch (error) {
       console.error("Login error:", error);
-      toast.error(error.message || "⚠️ Network error. Please try again later.");
+      toast.error(error.message || "⚠️ Network error. Please try again later.", { duration: 2000 });
     } finally {
       setLoading(false);
     }
@@ -46,6 +67,7 @@ const Login = () => {
 
   return (
     <div className="flex min-h-screen">
+      
       <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -170,7 +192,7 @@ const Login = () => {
         </motion.div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;
