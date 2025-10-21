@@ -1,50 +1,48 @@
-import { useState } from "react"
-import { Form, Input, Button, Checkbox, message } from "antd"
+import { useState } from "react";
+import { Form, Input, Button, Checkbox } from "antd";
 // eslint-disable-next-line no-unused-vars
-import { motion } from "framer-motion"
-import { Mail, Lock, Github, Chrome, Apple, Shield } from "lucide-react"
-import { Link, useNavigate } from "react-router-dom"
+import { motion } from "framer-motion";
+import { Mail, Lock, Github, Chrome, Apple, Shield } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import toast, { Toaster } from "react-hot-toast";
 
 const Login = () => {
-  const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const onFinish = async (values) => {
-    setLoading(true)
+    setLoading(true);
     try {
       const response = await fetch("http://localhost:5000/api/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (response.ok && data.success) {
-        message.success(data.message || "Login successful")
+        toast.success(data.message || "🎉 Login successful");
 
-        // ✅ Lưu token + user vào localStorage
-        localStorage.setItem("token", data.token)
-        localStorage.setItem("user", JSON.stringify(data.user))
+        // Lưu token + user
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
 
-        // ✅ redirect
-        navigate("/admin")
+        navigate("/admin");
       } else {
-        message.error(data.message || "Invalid email or password")
+        toast.error(data.message || "⚠️ Invalid email or password");
       }
     } catch (error) {
-      console.error("Login error:", error)
-      message.error("Network error. Please try again later.")
+      console.error("Login error:", error);
+      toast.error(error.message || "⚠️ Network error. Please try again later.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleSocialLogin = (provider) => {
-    message.info(`Sign In with ${provider}`)
-  }
+    toast(`Sign In with ${provider}`);
+  };
 
   return (
     <div className="flex min-h-screen">
