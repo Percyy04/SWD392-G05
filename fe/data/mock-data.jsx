@@ -3,7 +3,7 @@ import { TeamOutlined, UserOutlined, ClockCircleOutlined, ThunderboltOutlined } 
 // Mock data for the admin dashboard
 export const statsData = [
   {
-    title: "Active Groups",
+    title: "Active Teams",
     value: 24,
     change: "+12%",
     color: "bg-green-600",
@@ -32,7 +32,7 @@ export const statsData = [
   },
 ]
 
-export const teamsData = [
+export const TeamsData = [
   {
     key: "1",
     teamName: "Team Alpha",
@@ -120,14 +120,14 @@ export const postsData = [
     key: "1",
     title: "Team Formation Rules",
     content: "Please follow the guidelines...",
-    groups: "All",
+    Teams: "All",
     date: "2025-01-20",
   },
   {
     key: "2",
     title: "Deadline Extension",
     content: "Project deadline extended to...",
-    groups: "SE, AI",
+    Teams: "SE, AI",
     date: "2025-01-19",
   },
 ]

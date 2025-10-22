@@ -21,9 +21,10 @@ export function useStudents(shouldFetch) {
         const result = await response.json()
 
         if (result.success) {
-          const transformed = result.students.map((student, index) => ({
-            key: student.maSV || index,
-            id: student.maSV,
+          const studentsOnly = result.students.filter(s => s.role === "Student"); // chỉ lấy Student
+          const transformed = studentsOnly.map((student, index) => ({
+            key: student.id || index,
+            id: student.maSV || student.id || `SV-${index}`, // đảm bảo cột ID
             name: student.full_name,
             email: student.email,
             major: student.major || "-",
@@ -32,11 +33,11 @@ export function useStudents(shouldFetch) {
             status: student.status,
           }))
           setData(transformed)
-        }
-        else {
+        } else {
           setError("Failed to load students")
           message.error("Failed to load students")
         }
+
         // eslint-disable-next-line no-unused-vars
       } catch (err) {
         setError("Error connecting to server")

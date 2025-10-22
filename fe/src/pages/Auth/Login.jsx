@@ -49,13 +49,16 @@ const Login = () => {
             navigate("/");
         }
 
-        toast.success(data.message || "🎉 Login successful", { duration: 2000 });
+        toast.success(data.message || " Login successfully",  {
+        duration: 2000,
+        position: "top-center", // 👈 vị trí hiển thị
+      });
       } else {
-        toast.error(data.message || "⚠️ Invalid email or password", { duration: 2000 });
+        toast.error(data.message || " Invalid email or password", { duration: 2000 });
       }
     } catch (error) {
       console.error("Login error:", error);
-      toast.error(error.message || "⚠️ Network error. Please try again later.", { duration: 2000 });
+      toast.error(error.message || " Network error. Please try again later.", { duration: 2000 });
     } finally {
       setLoading(false);
     }

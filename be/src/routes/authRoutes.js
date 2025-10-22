@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
 const studentModel = require('../models/studentModel');
+const adminModel = require('../models/adminModel');
 const { generateToken } = require('../utils/token');
 
 
@@ -111,7 +112,6 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
-  // 🔹 Kiểm tra đầu vào
   if (!email || !password) {
     return res.status(400).json({
       success: false,
@@ -120,8 +120,15 @@ router.post('/login', async (req, res) => {
   }
 
   try {
-    // 🔍 Tìm user theo email
-    const user = await studentModel.findByEmail(email);
+    let user = await studentModel.findByEmail(email);
+    let roleType = 'Student';
+
+    // Nếu không phải student, kiểm tra lecturer
+    if (!user) {
+        user = await adminModel.findLecturerByEmail(email);       
+        roleType = 'Lecturer';
+    }
+
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -129,7 +136,7 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // 🔒 So sánh mật khẩu
+    // So sánh mật khẩu
     const isMatch = await bcrypt.compare(password, user.MatKhau);
     if (!isMatch) {
       return res.status(401).json({
@@ -138,35 +145,32 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // 🧩 Xác định role hợp lệ từ DB ENUM
-    const allowedRoles = ['Student', 'Leader', 'Admin'];
-    const safeRole = allowedRoles.includes(user.Role) ? user.Role : 'Student';
+    // Role hợp lệ
+    const allowedRoles = ['Student', 'Leader', 'Admin', 'Lecturer'];
+    const safeRole = allowedRoles.includes(user.Role) ? user.Role : roleType;
 
-    // 🔑 Tạo payload cho JWT
+    // Tạo JWT payload
     const tokenPayload = {
-      id: user.MaSV,
+      id: user.MaSV || user.MaGV,
       email: user.Email,
       role: safeRole,
     };
 
-    console.log('🎫 Token payload:', tokenPayload);
-
-    // 🔐 Sinh token
     const token = generateToken(tokenPayload);
 
-    // ✅ Trả về kết quả
+    // Trả về kết quả
     return res.status(200).json({
       success: true,
       message: 'Login successful',
       token,
       user: {
-        maSV: user.MaSV,
+        id: user.MaSV || user.MaGV,
         email: user.Email,
-        full_name: user.HoTen,
+        fullName: user.HoTen,
         role: safeRole,
-        major: user.Major,
-        team: user.Team,
-        status: user.Status,
+        major: user.Major || null,
+        team: user.Team || null,
+        status: user.Status || null,
       },
     });
   } catch (err) {
@@ -191,7 +195,7 @@ router.post('/login', async (req, res) => {
 router.post('/logout', (req, res) => {
   // JWT là stateless, server không lưu token
   // Frontend chỉ cần xóa token trên client
-  res.json({ success: true, message: 'Logout thành công. Vui lòng xóa token ở client.' });
+  res.json({ success: true, message: 'Logout successful' });
 });
 
 
@@ -204,31 +208,42 @@ router.post('/logout', (req, res) => {
  *     tags: [Authentication]
  */
 router.post('/forgot-password', async (req, res) => {
-  console.log('POST /forgot-password called');
-  console.log('Body:', req.body);
   const { email } = req.body;
 
   try {
-    const user = await studentModel.findByEmail(email);
+    // Tìm sinh viên trước
+    let user = await studentModel.findByEmail(email);
+    let type = 'student'; // loại người dùng
+
+    // Nếu không có sinh viên, thử tìm giảng viên
+    if (!user) {
+      user = await adminModel.findLecturerByEmail(email);
+      type = 'lecturer';
+    }
+
     if (!user) return res.status(404).json({ success: false, message: 'Email not found' });
 
     // tạo mã reset 5 số
     const resetCode = Math.floor(10000 + Math.random() * 90000).toString();
     const resetExpires = Date.now() + 10 * 60 * 1000; // 10 phút
 
-    // Lưu vào studentModel
-    await studentModel.updateResetCode(user.MaSV, resetCode, resetExpires);
+    // Lưu vào model tương ứng
+    if (type === 'student') {
+      await studentModel.updateResetCode(user.MaSV, resetCode, resetExpires);
+    } else {
+      await adminModel.updateResetCode(user.MaGV, resetCode, resetExpires);
+    }
 
     // Nội dung email
     const emailContent = `
-      <p>Xin chào ${user.HoTen},</p>
+      <p>Xin chào ${user.HoTen || user.hoTen},</p>
       <p>Mã đặt lại mật khẩu của bạn là: <b>${resetCode}</b></p>
       <p>Mã sẽ hết hạn sau 10 phút.</p>
     `;
 
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
-      to: user.Email,
+      to: user.Email || user.email,
       subject: 'Mã đặt lại mật khẩu của bạn',
       html: emailContent
     });
@@ -251,7 +266,14 @@ router.post('/verify-reset-code', async (req, res) => {
   const { email, resetCode } = req.body;
 
   try {
-    const user = await studentModel.findByEmail(email);
+    let user = await studentModel.findByEmail(email);
+    let type = 'student';
+
+    if (!user) {
+      user = await adminModel.findLecturerByEmail(email);
+      type = 'lecturer';
+    }
+
     if (
       !user ||
       user.resetPasswordCode !== resetCode ||
@@ -263,7 +285,7 @@ router.post('/verify-reset-code', async (req, res) => {
 
     // Tạo JWT tạm thời 10 phút
     const resetToken = jwt.sign(
-      { userId: user.MaSV },
+      { userId: user.MaSV || user.MaGV, type },
       process.env.JWT_SECRET,
       { expiresIn: '10m' }
     );
@@ -301,14 +323,20 @@ router.post('/reset-password', async (req, res) => {
     const actualToken = resetToken.startsWith('Bearer ') ? resetToken.slice(7) : resetToken;
     const decoded = jwt.verify(actualToken, process.env.JWT_SECRET);
 
-    const user = await studentModel.findById(decoded.userId);
-    if (!user) return res.status(404).json({ success: false, message: 'Người dùng không tìm thấy.' });
-
-    const hashed = await bcrypt.hash(newPassword, 10);
-    await studentModel.updatePassword(user.MaSV, hashed);
-
-    // Xoá reset code
-    await studentModel.clearResetCode(user.MaSV);
+    let user;
+    if (decoded.type === 'student') {
+      user = await studentModel.findById(decoded.userId);
+      if (!user) return res.status(404).json({ success: false, message: 'Người dùng không tìm thấy.' });
+      const hashed = await bcrypt.hash(newPassword, 10);
+      await studentModel.updatePassword(user.MaSV, hashed);
+      await studentModel.clearResetCode(user.MaSV);
+    } else {
+      user = await adminModel.findLecturerById(decoded.userId);
+      if (!user) return res.status(404).json({ success: false, message: 'Người dùng không tìm thấy.' });
+      const hashed = await bcrypt.hash(newPassword, 10);
+      await adminModel.updatePassword(user.MaGV, hashed);
+      await adminModel.clearResetCode(user.MaGV);
+    }
 
     res.json({ success: true, message: 'Mật khẩu đã được đặt lại thành công.' });
   } catch (err) {

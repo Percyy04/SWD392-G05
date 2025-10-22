@@ -5,7 +5,7 @@ export function Reports() {
     <div className="space-y-4">
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={12}>
-          <Card title="Groups by Major" className="bg-white border border-gray-200 shadow-sm">
+          <Card title="teams by Major" className="bg-white border border-gray-200 shadow-sm">
             <div className="space-y-3">
               {[
                 { name: "Software Engineering", count: 8, percent: 67 },
@@ -14,7 +14,7 @@ export function Reports() {
                 <div key={i}>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-gray-700">{item.name}</span>
-                    <span className="font-semibold text-gray-900">{item.count} groups</span>
+                    <span className="font-semibold text-gray-900">{item.count} teams</span>
                   </div>
                   <Progress percent={item.percent} strokeColor="#10b981" />
                 </div>

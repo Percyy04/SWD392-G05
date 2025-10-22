@@ -1,6 +1,3 @@
-// pages/admin.js
-"use client";
-
 import { useState } from "react";
 import { Layout, Menu, Button, Badge, Avatar, Dropdown } from "antd";
 import {
@@ -18,53 +15,105 @@ import {
   SettingOutlined,
   BellOutlined,
   LogoutOutlined,
+  IdcardOutlined,
 } from "@ant-design/icons";
 
-import { Dashboard } from "../Admin/dashboard"
-import { Groups } from "../Admin/groups";
+import { Dashboard } from "../Admin/dashboard";
+import { Teams } from "../Admin/teams";
 import { Students } from "../Admin/students";
 import { Requests } from "../Admin/requests";
 import { LeaderVoting } from "../Admin/leader-voting";
 import { Posts } from "../Admin/posts";
-import { MasterData } from "../Admin/master-data";
+// import { MasterData } from "../Admin/master-data";
 import { Suggestions } from "../Admin/suggestions";
 import { Reports } from "../Admin/reports";
 import { Settings } from "../Admin/settings";
 import { pendingRequestsData } from "../../data/mockData";
+import { Lecturers } from "../Admin/lecturers";
+import { useNavigate } from "react-router-dom";
+import toast, { Toaster } from "react-hot-toast";
 
 const { Header, Sider, Content } = Layout;
 
 export default function Admin() {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedMenu, setSelectedMenu] = useState("1");
+  const navigate = useNavigate();
 
-  const menuItems = [
-    { key: "1", icon: <DashboardOutlined />, label: "Dashboard" },
-    { key: "2", icon: <TeamOutlined />, label: "Groups" },
-    { key: "3", icon: <UserOutlined />, label: "Students" },
-    { key: "4", icon: <ClockCircleOutlined />, label: "Requests" },
-    { key: "5", icon: <ThunderboltOutlined />, label: "Leader Voting" },
-    { key: "6", icon: <FileTextOutlined />, label: "Posts" },
-    { key: "7", icon: <DatabaseOutlined />, label: "Master Data" },
-    { key: "8", icon: <BulbOutlined />, label: "Smart Suggestions" },
-    { key: "9", icon: <BarChartOutlined />, label: "Reports" },
-    { key: "10", icon: <SettingOutlined />, label: "Settings" },
-  ];
+const handleLogout = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch("http://localhost:5000/api/logout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const data = await res.json();
 
-  const renderContent = () => {
-    switch (selectedMenu) {
-      case "1": return <Dashboard />;
-      case "2": return <Groups />;
-      case "3": return <Students isActive={selectedMenu === "3"} />;
-      case "4": return <Requests />;
-      case "5": return <LeaderVoting />;
-      case "6": return <Posts />;
-      case "7": return <MasterData />;
-      case "8": return <Suggestions />;
-      case "9": return <Reports />;
-      case "10": return <Settings />;
-      default: return null;
+    // ✅ Hiển thị đúng thông báo từ backend
+    if (data.success) {
+      toast.success(data.message || "Đăng xuất thành công", {
+        duration: 2000,
+        position: "top-center", // 👈 vị trí hiển thị
+      });
+      
+    } else {
+      toast.error("Đăng xuất thất bại");
     }
+  } catch (err) {
+    console.error("Logout error:", err);
+    toast.error("Logout failed");
+  } finally {
+    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
+    setTimeout(() => navigate("/"), 1000);
+  }
+};
+
+
+const menuItems = [
+  { key: "1", icon: <DashboardOutlined />, label: "Dashboard" },
+  // { key: "2", icon: <DatabaseOutlined />, label: "Master Data" },
+  { key: "3", icon: <IdcardOutlined />, label: "Lecturers" },
+  { key: "4", icon: <UserOutlined />, label: "Students" },
+  { key: "5", icon: <TeamOutlined />, label: "Teams" },
+  { key: "6", icon: <ClockCircleOutlined />, label: "Requests" },
+  { key: "7", icon: <ThunderboltOutlined />, label: "Leader Voting" },
+  { key: "8", icon: <FileTextOutlined />, label: "Posts" },
+  { key: "9", icon: <BulbOutlined />, label: "Smart Suggestions" },
+  { key: "10", icon: <BarChartOutlined />, label: "Reports" },
+  { key: "11", icon: <SettingOutlined />, label: "Settings" }
+];
+
+const renderContent = () => {
+  switch (selectedMenu) {
+    case "1": return <Dashboard />;
+    // case "2": return <MasterData />;
+    case "3": return <Lecturers />;
+    case "4": return <Students isActive={selectedMenu === "4"} />;
+    case "5": return <Teams/>;
+    case "6": return <Requests />;
+    case "7": return <LeaderVoting />;
+    case "8": return <Posts />;
+    case "9": return <Suggestions />;
+    case "10": return <Reports />;
+    case "11": return <Settings />;
+    default: return null;
+  }
+};
+
+
+  const dropdownMenu = {
+    items: [
+      { key: "1", label: "Profile" },
+      { key: "2", label: "Settings" },
+      { key: "3", label: "Logout", danger: true, icon: <LogoutOutlined /> },
+    ],
+    onClick: ({ key }) => {
+      if (key === "3") handleLogout();
+    },
   };
 
   return (
@@ -102,17 +151,12 @@ export default function Admin() {
             <Badge count={pendingRequestsData.length} offset={[-5, 5]}>
               <Button type="text" icon={<BellOutlined className="text-gray-900 text-lg" />} />
             </Badge>
-            <Dropdown
-              menu={{
-                items: [
-                  { key: "1", label: "Profile" },
-                  { key: "2", label: "Settings" },
-                  { key: "3", label: "Logout", danger: true, icon: <LogoutOutlined /> },
-                ],
-              }}
-            >
+            <Dropdown menu={dropdownMenu} placement="bottomRight" trigger={["click"]}>
               <Avatar className="cursor-pointer bg-green-600">A</Avatar>
             </Dropdown>
+
+
+
           </div>
         </Header>
 

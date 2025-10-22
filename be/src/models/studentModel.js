@@ -24,7 +24,7 @@ const StudentModel = {
 async create({ maSV, email, password, full_name, role = 'Student', major = null, team = null, status = null }) {
   const allowedMajors = ["SE","AI","SA","SS","IB"];
   const allowedStatuses = ["K15","K16","K17","K18","K19","K20","K21","K22"];
-  const allowedRoles = ["Student", "Leader", "Admin"]; // ✅ enum roles
+  const allowedRoles = ["Student", "Leader", "Admin", "Lecturer"];  // ✅ enum roles
 
   const safeMajor = allowedMajors.includes(major) ? major : null;
   const safeStatus = allowedStatuses.includes(status) ? status : null;
@@ -88,7 +88,7 @@ async create({ maSV, email, password, full_name, role = 'Student', major = null,
 
   // ⚡ Cập nhật role
 async updateRole(maSV, newRole) {
-  const allowedRoles = ['Admin', 'Leader', 'Student'];
+  const allowedRoles = ['Admin', 'Leader', 'Student', 'Lecturer'];
   if (!allowedRoles.includes(newRole)) throw new Error(`Invalid role: ${newRole}`);
   const sql = `UPDATE Student SET Role = ? WHERE MaSV = ?`;
   await db.query(sql, [newRole, maSV]);

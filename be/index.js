@@ -9,6 +9,7 @@ require('dotenv').config({ path: __dirname + '/.env' });
 const express = require('express');
 const cors = require('cors');
 const { swaggerUi, swaggerDocs } = require('./src/docs/swagger');
+const adminRoutes = require('./src/routes/adminRoutes');
 
 // --------------------
 // ⚙️ App setup
@@ -38,6 +39,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 // --------------------
 app.use('/api', require('./src/routes/authRoutes'));
 app.use('/api/students', require('./src/routes/studentRoutes'));
+app.use('/api/admin', adminRoutes);
 
 // --------------------
 // 🌐 Root route

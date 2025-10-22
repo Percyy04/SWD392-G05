@@ -1,7 +1,3 @@
-"use client"
-
-
-
 import { Card, Table, Tag, Button, Dropdown, Modal, Form, Input, Select, message, Badge } from "antd"
 import {
   PlusOutlined,
@@ -12,9 +8,9 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons"
 import { useState } from "react"
-import { teamsData } from "../../data/mockData";
+import { TeamsData } from "../../../data/mock-data";
 
-export function Groups() {
+export function Teams() {
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [form] = Form.useForm()
 
@@ -79,7 +75,7 @@ export function Groups() {
   return (
     <>
       <Card
-        title="Groups Management"
+        title="teams Management"
         extra={
           <Button
             type="primary"
@@ -92,7 +88,7 @@ export function Groups() {
         }
         className="bg-white border border-gray-200 shadow-sm"
       >
-        <Table columns={columns} dataSource={teamsData} pagination={{ pageSize: 10 }} />
+        <Table columns={columns} dataSource={TeamsData} pagination={{ pageSize: 10 }} />
       </Card>
 
       <Modal

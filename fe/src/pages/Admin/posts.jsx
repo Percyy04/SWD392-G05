@@ -21,7 +21,7 @@ export function Posts() {
                 <h4 className="text-gray-900 font-semibold">{post.title}</h4>
                 <p className="text-gray-600 text-sm mt-1">{post.content}</p>
                 <div className="flex items-center gap-4 mt-2">
-                  <span className="text-gray-500 text-xs">Groups: {post.groups}</span>
+                  <span className="text-gray-500 text-xs">teams: {post.teams}</span>
                   <span className="text-gray-500 text-xs">{post.date}</span>
                 </div>
               </div>

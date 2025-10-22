@@ -164,14 +164,14 @@ export const postsData = [
     key: "1",
     title: "Team Formation Rules",
     content: "Please follow the guidelines...",
-    groups: "All",
+    teams: "All",
     date: "2025-01-20",
   },
   {
     key: "2",
     title: "Deadline Extension",
     content: "Project deadline extended to...",
-    groups: "SE, AI",
+    teams: "SE, AI",
     date: "2025-01-19",
   },
 ]
