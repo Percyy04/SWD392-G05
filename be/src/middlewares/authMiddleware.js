@@ -1,3 +1,5 @@
+// authMiddleware.js
+
 const jwt = require('jsonwebtoken');
 
 exports.verifyToken = (req, res, next) => {
@@ -15,4 +17,12 @@ exports.verifyToken = (req, res, next) => {
     console.error('JWT verification failed:', err.message);
     return res.status(403).json({ message: 'Invalid or expired token' });
   }
+};
+
+// Middleware kiểm tra Admin
+exports.verifyAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== 'Admin') {
+    return res.status(403).json({ message: 'Access denied. Admin only.' });
+  }
+  next();
 };

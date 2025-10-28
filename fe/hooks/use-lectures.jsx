@@ -48,40 +48,51 @@ export function useLecturers(shouldFetch) {
     fetchLecturers();
   }, [shouldFetch]);
 
-  const createLecturer = async (payload) => {
-    try {
-      const res = await fetch("http://localhost:5000/api/admin/create-lecturer", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(payload),
-      });
-      const result = await res.json();
-      if (result.success) {
-        const lecturer = result.lecturer;
-        setData((prev) => [
-          ...prev,
-          {
-            key: lecturer.MaGV,
-            id: lecturer.MaGV,
-            name: lecturer.HoTen,
-            email: lecturer.Email,
-            role: lecturer.Role || "-",
-            department: lecturer.Department || "-",
-            createdAt: lecturer.CreatedAt ? new Date(lecturer.CreatedAt).toLocaleString() : "-",
-          },
-        ]);
-      } else {
-        message.error(result.message || "Failed to create lecturer");
-      }
-      return result;
-    } catch (err) {
-      message.error("Failed to create lecturer");
-      throw err;
+const createLecturer = async (payload) => {
+  try {
+    const res = await fetch("http://localhost:5000/api/admin/create-lecturer", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    // ✅ Check HTTP status
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.message || "Failed to create lecturer");
     }
-  };
+
+    const result = await res.json();
+
+    if (result.success && result.lecturer) {
+      const lec = result.lecturer;
+      setData((prev) => [
+        ...prev,
+        {
+          key: lec.maGV || lec.MaGV,
+          id: lec.maGV || lec.MaGV,
+          name: lec.hoTen || lec.HoTen,
+          email: lec.email || lec.Email,
+          role: lec.role || lec.Role || "Lecturer",
+          createdAt: new Date().toLocaleString(),
+        },
+      ]);
+      message.success(result.message || "Lecturer created successfully");
+    } else {
+      throw new Error(result.message || "Failed to create lecturer");
+    }
+
+    return result;
+  } catch (err) {
+    console.error("❌ createLecturer error:", err);
+    message.error(err.message || "Failed to create lecturer");
+    return { success: false, message: err.message };
+  }
+};
+
 
   const updateLecturer = async (maGV, payload) => {
     try {

@@ -5,6 +5,8 @@ import ForgetPassword from "./pages/Auth/Forgetpassword";
 import Signup from "./pages/Auth/Signup";
 import ResetPassword from "./pages/Auth/ResetPassword";
 import Admin from "./pages/Admin/Admin";
+import Student from "./pages/Student/student";
+import TeamDetail from "./pages/Student/teamdetail";
 
 // 🛡️ ProtectedRoute: chỉ cho phép truy cập khi có token và role hợp lệ
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -28,8 +30,8 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 // 🚫 Trang Unauthorized
 function Unauthorized() {
   return (
-      <div style={{ textAlign: "center", marginTop: "10%" }}>
-        <h1>🚫Access denied</h1>
+    <div style={{ textAlign: "center", marginTop: "10%" }}>
+      <h1>🚫Access denied</h1>
       <p>You do not have permission to access this page.</p>
       <a href="/" style={{ color: "blue" }}> Back to home page</a>
     </div>
@@ -60,7 +62,7 @@ const PublicRoute = ({ children }) => {
 function App() {
   return (
     <Router>
-      <Toaster position="top-right" reverseOrder={false} />
+      <Toaster position="top-center" reverseOrder={false} />
 
       <Routes>
         {/* Public routes */}
@@ -86,21 +88,33 @@ function App() {
           }
         />
 
+
+        <Route
+          path="/student"
+          element={
+            <ProtectedRoute allowedRoles={["Student"]}>
+              <Student />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/student/team/:teamId"
+          element={
+            <ProtectedRoute allowedRoles={["Student"]}>
+              <TeamDetail />
+            </ProtectedRoute>
+          }
+        />
+
+
+
         {/* Nếu sau này bạn có trang Leader hoặc Student riêng */}
         {/* <Route
           path="/leader"
           element={
             <ProtectedRoute allowedRoles={["Leader", "Admin"]}>
               <LeaderPage />
-            </ProtectedRoute>
-          }
-        /> */}
-
-        {/* <Route
-          path="/student"
-          element={
-            <ProtectedRoute allowedRoles={["Student", "Leader", "Admin"]}>
-              <StudentPage />
             </ProtectedRoute>
           }
         /> */}

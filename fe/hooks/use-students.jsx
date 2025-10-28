@@ -17,9 +17,21 @@ export function useStudents(shouldFetch) {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
           },
-        })
-        const result = await response.json()
+        });
 
+        if (!response.ok) {
+          if (response.status === 403) {
+            setError("Access denied. Admin only.");
+            message.error("You do not have permission to view this data.");
+          } else {
+            setError("Failed to load students");
+            message.error("Failed to load students");
+          }
+          setLoading(false);
+          return;
+        }
+
+        const result = await response.json();
         if (result.success) {
           const studentsOnly = result.students.filter(s => s.role === "Student"); // chỉ lấy Student
           const transformed = studentsOnly.map((student, index) => ({

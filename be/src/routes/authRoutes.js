@@ -161,7 +161,7 @@ router.post('/login', async (req, res) => {
     // Trả về kết quả
     return res.status(200).json({
       success: true,
-      message: 'Login successful',
+      message: 'Login successfully',
       token,
       user: {
         id: user.MaSV || user.MaGV,

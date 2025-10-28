@@ -115,7 +115,72 @@ async updateRole(maSV, newRole) {
     if (!allowedStatuses.includes(status)) throw new Error(`Invalid status: ${status}`);
     const sql = `UPDATE Student SET Status = ? WHERE MaSV = ?`;
     await db.query(sql, [status, maSV]);
+  },
+
+  // Kiểm tra Student có đang ở team nào không
+async findTeam(maSV) {
+  const [rows] = await db.query(
+    `SELECT Team AS team FROM Student WHERE MaSV = ? LIMIT 1`,
+    [maSV]
+  );
+  return rows[0]?.team || null;
+},
+
+// Lấy danh sách tất cả student trong team
+async getMembersByTeam(teamId) {
+  const [rows] = await db.query(
+    `SELECT MaSV AS maSV, HoTen AS full_name, Email AS email, Role AS role 
+     FROM Student WHERE Team = ?`,
+    [teamId]
+  );
+  return rows;
+},
+
+// Lưu request tham gia team (nếu dùng bảng team_requests)
+async addJoinRequest(teamId, studentId, fullName) {
+  const [rows] = await db.query(
+    `INSERT INTO team_requests (teamId, studentId, full_name, status) VALUES (?, ?, ?, 'pending')`,
+    [teamId, studentId, fullName]
+  );
+  return rows;
+},
+
+async getJoinRequests(teamId) {
+  const [rows] = await db.query(
+    `SELECT * FROM team_requests WHERE teamId = ? AND status = 'pending'`,
+    [teamId]
+  );
+  return rows;
+},
+
+async assignStudentToTeam(maSV, teamId) {
+  await this.updateTeam(maSV, teamId);
+
+  // Đồng thời update role nếu cần (ví dụ: 'Leader' nếu là leader)
+  await db.query(
+    `UPDATE Student SET Role = 'Student' WHERE MaSV = ?`,
+    [maSV]
+  );
+},
+
+async joinTeam(studentId, teamId) {
+  const [result] = await db.execute(
+    `UPDATE Student SET Team = ? WHERE MaSV = ?`,
+    [teamId, studentId]
+  );
+  return result;
+},
+
+async joinTeamAndUpdateStatus(studentId, teamId) {
+  await this.joinTeam(studentId, teamId);
+  const team = await this.findById(teamId);
+  if (team.SoLuongThanhVienHienTai >= team.SoLuongThanhVienToiDa) {
+    await this.updateStatus(teamId, 'Voting');
+    team.TrangThaiNhom = 'Voting';
   }
+  return team;
+}
+
 
 };
 

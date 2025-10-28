@@ -67,6 +67,7 @@ const handleLogout = async () => {
     toast.error("Logout failed");
   } finally {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     sessionStorage.removeItem("token");
     setTimeout(() => navigate("/"), 1000);
   }
