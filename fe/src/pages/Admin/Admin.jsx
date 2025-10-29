@@ -80,12 +80,12 @@ const menuItems = [
   { key: "3", icon: <IdcardOutlined />, label: "Lecturers" },
   { key: "4", icon: <UserOutlined />, label: "Students" },
   { key: "5", icon: <TeamOutlined />, label: "Teams" },
-  { key: "6", icon: <ClockCircleOutlined />, label: "Requests" },
-  { key: "7", icon: <ThunderboltOutlined />, label: "Leader Voting" },
+  // { key: "6", icon: <ClockCircleOutlined />, label: "Requests" },
+  // { key: "7", icon: <ThunderboltOutlined />, label: "Leader Voting" },
   { key: "8", icon: <FileTextOutlined />, label: "Posts" },
-  { key: "9", icon: <BulbOutlined />, label: "Smart Suggestions" },
-  { key: "10", icon: <BarChartOutlined />, label: "Reports" },
-  { key: "11", icon: <SettingOutlined />, label: "Settings" }
+  // { key: "9", icon: <BulbOutlined />, label: "Smart Suggestions" },
+  // { key: "10", icon: <BarChartOutlined />, label: "Reports" },
+  // { key: "11", icon: <SettingOutlined />, label: "Settings" }
 ];
 
 const renderContent = () => {
