@@ -39,6 +39,7 @@ export default function Admin() {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedMenu, setSelectedMenu] = useState("1");
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
 const handleLogout = async () => {
   try {
@@ -97,7 +98,7 @@ const renderContent = () => {
     case "5": return <Teams/>;
     case "6": return <Requests />;
     case "7": return <LeaderVoting />;
-    case "8": return <Posts />;
+    case "8": return <Posts token={token} />;
     case "9": return <Suggestions />;
     case "10": return <Reports />;
     case "11": return <Settings />;

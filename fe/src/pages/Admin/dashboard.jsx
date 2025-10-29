@@ -1,9 +1,16 @@
 // components/dashboard.js
-import { Row, Col, Card } from "antd";
+import { Row, Col, Card, Spin } from "antd";
 import { TrendingUp } from "lucide-react";
-import { statsData } from "../../data/mockData";
+import { useStudents } from "../../../hooks/use-students";
+import { useTeams } from "../../../hooks/use-teams";
+import { useLecturers } from "../../../hooks/use-lectures";
 
 export function Dashboard() {
+  // Lấy dữ liệu teams, students và lecturers
+  const { data: teams, loading: teamsLoading } = useTeams(true);
+  const { data: students, loading: studentsLoading } = useStudents(true);
+  const { data: lecturers, loading: lecturersLoading } = useLecturers(true);
+
   const alerts = [
     { color: "orange", icon: "⚠️", title: "Team Delta exceeded limit", desc: "6 members in a team with max 6" },
     { color: "red", icon: "❌", title: "Pending requests overdue", desc: "3 requests waiting for approval" },
@@ -19,6 +26,34 @@ export function Dashboard() {
     }
   };
 
+  // Stats Cards dùng dữ liệu thật
+  const statsData = [
+    {
+      title: "Total Teams",
+      value: teams ? teams.length : 0,
+      icon: "📊",
+    },
+    {
+      title: "Active Students",
+      value: students ? students.length : 0,
+      icon: "👨‍🎓",
+    },
+    {
+      title: "Total Lecturers",
+      value: lecturers ? lecturers.length : 0,
+      icon: "🧑‍🏫",
+    },
+  ];
+
+  // Hiển thị spinner nếu dữ liệu đang load
+  if (teamsLoading || studentsLoading || lecturersLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
@@ -32,10 +67,10 @@ export function Dashboard() {
                   <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
                   <p className="text-green-600 text-sm mt-1 flex items-center gap-1">
                     <TrendingUp className="w-4 h-4" />
-                    {stat.change}
+                    {/* Có thể thêm phần change nếu cần */}
                   </p>
                 </div>
-                <div className="p-3 rounded-lg text-white text-2xl bg-gray-400">📊</div>
+                <div className="p-3 rounded-lg text-white text-2xl bg-gray-400">{stat.icon}</div>
               </div>
             </Card>
           </Col>
@@ -47,7 +82,7 @@ export function Dashboard() {
         <Col xs={24} lg={12}>
           <Card title="Recent Activity" className="bg-white border border-gray-200 shadow-sm">
             <div className="space-y-3 max-h-80 overflow-y-auto">
-              {[
+              {[ 
                 { title: "Team Alpha formed", desc: "5 members joined", time: "2 hours ago" },
                 { title: "Leader elected", desc: "John Doe selected as leader", time: "4 hours ago" },
                 { title: "Request approved", desc: "Alice joined Team Beta", time: "6 hours ago" },

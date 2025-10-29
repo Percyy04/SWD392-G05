@@ -242,7 +242,7 @@ export function Teams() {
   // ✅ Columns với cột # tự động
   const columns = [
     {
-      title: "#",
+      title: "STT",
       key: "index",
       width: 60,
       align: "center",

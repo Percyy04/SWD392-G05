@@ -2,12 +2,12 @@ import { useState } from "react";
 import { Layout, Menu, Button, Avatar, Dropdown } from "antd";
 import { MenuFoldOutlined, MenuUnfoldOutlined, DashboardOutlined, TeamOutlined, FileTextOutlined, LogoutOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { useStudentDashboard } from "../../../hooks/useStudentDashboard";
 
 import Dashboard from "./Dashboard";
 import Teams from "./Teams";
-import Requests from "./Requests";
+import Posts from "./posts"; // import Posts student version
 
 const { Header, Sider, Content } = Layout;
 
@@ -16,7 +16,7 @@ export default function Student() {
   const [selectedMenu, setSelectedMenu] = useState("1");
   const navigate = useNavigate();
 
-  const { student, teams, requests, loading, error } = useStudentDashboard(true);
+  const { student, teams, loading, error } = useStudentDashboard(true);
 
   // ---------------- Logout ----------------
   const handleLogout = async () => {
@@ -51,7 +51,7 @@ export default function Student() {
   const menuItems = [
     { key: "1", icon: <DashboardOutlined />, label: "Dashboard" },
     { key: "2", icon: <TeamOutlined />, label: "Teams" },
-    { key: "3", icon: <FileTextOutlined />, label: "Requests" },
+    { key: "3", icon: <FileTextOutlined />, label: "Posts" }, // đổi label cho rõ
   ];
 
   const renderContent = () => {
@@ -59,10 +59,19 @@ export default function Student() {
     if (error) return <p className="text-red-600">{error}</p>;
 
     switch (selectedMenu) {
-      case "1": return <Dashboard student={student} />;
-      case "2": return <Teams student={student} teams={teams} />;
-      case "3": return <Requests requests={requests} />;
-      default: return null;
+      case "1":
+        return <Dashboard student={student} />;
+      case "2":
+        return <Teams student={student} teams={teams} />;
+      case "3":
+        return (
+          <Posts
+            token={localStorage.getItem("token")}
+            currentStudentId={student?.id || student?.MaSV} // đảm bảo lấy đúng id
+          />
+        );
+      default:
+        return null;
     }
   };
 
@@ -72,7 +81,13 @@ export default function Student() {
         <div className="h-16 flex items-center justify-center border-b border-gray-200">
           <h1 className="text-gray-900 font-bold text-xl">{collapsed ? "ST" : "Student"}</h1>
         </div>
-        <Menu theme="light" mode="inline" selectedKeys={[selectedMenu]} items={menuItems} onClick={({ key }) => setSelectedMenu(key)} />
+        <Menu
+          theme="light"
+          mode="inline"
+          selectedKeys={[selectedMenu]}
+          items={menuItems}
+          onClick={({ key }) => setSelectedMenu(key)}
+        />
       </Sider>
 
       <Layout>
@@ -87,8 +102,6 @@ export default function Student() {
           {renderContent()}
         </Content>
       </Layout>
-
-      
     </Layout>
   );
 }

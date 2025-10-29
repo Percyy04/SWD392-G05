@@ -3,7 +3,10 @@
 const jwt = require('jsonwebtoken');
 
 exports.verifyToken = (req, res, next) => {
+  console.log("🔹 Authorization Header:", req.headers.authorization);
   const header = req.headers['authorization'];
+  
+
   if (!header) return res.status(401).json({ message: 'No token provided' });
 
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
@@ -11,13 +14,15 @@ exports.verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // payload của token
+    console.log("✅ Decoded token:", decoded); // <--- thêm dòng này
+    req.user = decoded;
     next();
   } catch (err) {
-    console.error('JWT verification failed:', err.message);
+    console.error('❌ JWT verification failed:', err.message);
     return res.status(403).json({ message: 'Invalid or expired token' });
   }
 };
+
 
 // Middleware kiểm tra Admin
 exports.verifyAdmin = (req, res, next) => {

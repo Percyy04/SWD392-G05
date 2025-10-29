@@ -8,6 +8,7 @@ const adminRoutes = require('./src/routes/adminRoutes');
 const teamRoutes = require('./src/routes/teamRoutes');
 const studentRoutes = require('./src/routes/studentRoutes');
 const voteRoutes = require('./src/routes/voteRoutes');
+const postRoutes = require('./src/routes/postRoutes');
 const jwt = require('jsonwebtoken'); // để xác thực token Socket.IO
 
 const app = express();
@@ -31,6 +32,7 @@ app.use('/api/students', studentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/vote', voteRoutes);
+app.use('/api/posts', postRoutes);
 
 // Root
 app.get('/', (req, res) => res.send('Backend is running!'));
@@ -44,6 +46,7 @@ const { Server } = require('socket.io');
 const io = new Server(server, {
   cors: { origin: "*" },
 });
+app.set("io", io);
 
 // Middleware xác thực Socket.IO (tùy chọn)
 io.use((socket, next) => {
@@ -84,19 +87,31 @@ io.on('connection', (socket) => {
   socket.on('student_request', (requestData) => {
     console.log('📨 New student request:', requestData);
 
-    // Emit realtime cho admin
     io.to('admins').emit('new_request', requestData);
 
-    // Tùy chọn: emit lại cho chính student để xác nhận
     if (requestData.studentId) {
       io.to(`student_${requestData.studentId}`).emit('request_sent', requestData);
     }
+  });
+
+  // --------------------
+  // Realtime cho Posts & Comments
+  // --------------------
+  socket.on('new_post', (post) => {
+    console.log('📝 New post created:', post);
+    io.emit('post_created', post); // phát cho tất cả client
+  });
+
+  socket.on('new_comment', (comment) => {
+    console.log('💬 New comment added:', comment);
+    io.emit('comment_created', comment); // phát cho tất cả client
   });
 
   socket.on('disconnect', () => {
     console.log('❌ Client disconnected:', socket.id);
   });
 });
+
 
 // Start server
 server.listen(PORT, () => {
