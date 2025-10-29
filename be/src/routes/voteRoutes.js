@@ -3,25 +3,68 @@ const router = express.Router();
 const teamModel = require("../models/teamModel");
 const db = require("../config/db");
 
-// ✅ Middleware token
+// Middleware
 const { verifyToken, verifyAdmin } = require("../middlewares/authMiddleware");
 
+/**
+ * @swagger
+ * /leader:
+ *   post:
+ *     summary: Vote cho Leader trong team
+ *     description: Sinh viên vote cho một thành viên khác trong cùng team để chọn leader.
+ *     tags: [Team Votes]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - teamId
+ *               - candidateId
+ *             properties:
+ *               teamId:
+ *                 type: string
+ *                 description: ID của team
+ *               candidateId:
+ *                 type: string
+ *                 description: ID của thành viên được vote
+ *     responses:
+ *       200:
+ *         description: Vote thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 msg:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Dữ liệu gửi lên không hợp lệ hoặc vote bản thân
+ *       403:
+ *         description: Sinh viên không thuộc team
+ *       500:
+ *         description: Lỗi server
+ */
 router.post("/leader", verifyToken, async (req, res) => {
   try {
-    const voterId = req.user.id; // đây chính là MaSV
+    const voterId = req.user.id;
     const { teamId, candidateId } = req.body;
 
-    // ✅ Kiểm tra body hợp lệ
     if (!teamId || !candidateId) {
       return res.status(400).json({ status: "error", msg: "Missing team or candidate" });
     }
 
-    // ✅ Không cho tự vote mình
     if (voterId === candidateId) {
       return res.status(400).json({ status: "error", msg: "You cannot vote for yourself" });
     }
 
-    // ✅ Kiểm tra voter có thuộc team không
     const [[voter]] = await db.execute(
       "SELECT Team FROM Student WHERE MaSV = ?",
       [voterId]
@@ -31,10 +74,8 @@ router.post("/leader", verifyToken, async (req, res) => {
       return res.status(403).json({ status: "error", msg: "You are not in this team" });
     }
 
-    // ✅ Tiến hành vote
     const result = await teamModel.voteLeader(teamId, voterId, candidateId);
 
-    // ✅ Phản hồi theo trạng thái model trả về
     if (result.status === "leader_chosen") {
       return res.json({
         status: "leader_chosen",
@@ -56,18 +97,65 @@ router.post("/leader", verifyToken, async (req, res) => {
 });
 
 
-
-
-// ✅ API: Student & Admin xem kết quả vote trong Team
+/**
+ * @swagger
+ * /leader/{teamId}:
+ *   get:
+ *     summary: Lấy kết quả vote Leader trong team
+ *     description: Sinh viên hoặc Admin xem kết quả vote của team. Sinh viên chỉ xem được team của mình, Admin xem được tất cả.
+ *     tags: [Team Votes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID của team
+ *     responses:
+ *       200:
+ *         description: Lấy danh sách phiếu vote thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 teamId:
+ *                   type: string
+ *                 totalVotes:
+ *                   type: integer
+ *                 votes:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       teamId:
+ *                         type: string
+ *                       voterId:
+ *                         type: string
+ *                       voterName:
+ *                         type: string
+ *                       candidateId:
+ *                         type: string
+ *                       candidateName:
+ *                         type: string
+ *       403:
+ *         description: Sinh viên không được quyền xem team khác
+ *       404:
+ *         description: Sinh viên không tồn tại
+ *       500:
+ *         description: Lỗi server
+ */
 router.get("/leader/:teamId", verifyToken, async (req, res) => {
   try {
     const { teamId } = req.params;
     const requesterId = req.user.id;
     const requesterRole = req.user.role;
 
-    // ✅ Nếu là Admin → xem được ngay
     if (requesterRole !== "Admin") {
-      // ✅ Student phải thuộc đúng team
       const [[student]] = await db.execute(
         "SELECT Team FROM Student WHERE MaSV = ?",
         [requesterId]
@@ -88,7 +176,6 @@ router.get("/leader/:teamId", verifyToken, async (req, res) => {
       }
     }
 
-    // ✅ Lấy danh sách phiếu bầu
     const [rows] = await db.execute(`
       SELECT 
         v.teamId,
@@ -118,7 +205,5 @@ router.get("/leader/:teamId", verifyToken, async (req, res) => {
     });
   }
 });
-
-
 
 module.exports = router;

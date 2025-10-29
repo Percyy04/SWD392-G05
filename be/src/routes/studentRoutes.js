@@ -6,8 +6,61 @@ const db = require('../config/db');
 const { verifyToken, verifyAdmin } = require('../middlewares/authMiddleware');
 
 /**
- * GET /api/students/me
- * Lấy thông tin sinh viên hiện tại (Student role)
+ * @swagger
+ * /students/me:
+ *   get:
+ *     summary: Lấy thông tin sinh viên hiện tại
+ *     description: Sinh viên đăng nhập (Student role) có thể lấy thông tin cá nhân của mình.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lấy thông tin sinh viên thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 student:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     MaSV:
+ *                       type: string
+ *                     HoTen:
+ *                       type: string
+ *                     Email:
+ *                       type: string
+ *                     Team:
+ *                       type: string
+ *                     Role:
+ *                       type: string
+ *       404:
+ *         description: Sinh viên không tồn tại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Lỗi server
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  */
 router.get('/me', verifyToken, async (req, res) => {
   try {
@@ -21,9 +74,61 @@ router.get('/me', verifyToken, async (req, res) => {
   }
 });
 
+
 /**
- * GET /api/students
- * Lấy tất cả sinh viên (Admin only)
+ * @swagger
+ * /students:
+ *   get:
+ *     summary: Lấy tất cả sinh viên
+ *     description: Chỉ Admin mới có quyền xem toàn bộ danh sách sinh viên.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lấy danh sách sinh viên thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 students:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       MaSV:
+ *                         type: string
+ *                       HoTen:
+ *                         type: string
+ *                       Email:
+ *                         type: string
+ *                       Team:
+ *                         type: string
+ *                       Role:
+ *                         type: string
+ *       403:
+ *         description: Không có quyền truy cập (không phải Admin)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Lỗi server
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 router.get('/', verifyToken, verifyAdmin, async (req, res) => {
   try {
@@ -36,9 +141,56 @@ router.get('/', verifyToken, verifyAdmin, async (req, res) => {
 });
 
 /**
- * GET /api/students/teams
- * Lấy tất cả nhóm có sẵn
- * Nếu student chưa có team, frontend sẽ hiển thị nút join/create
+ * @swagger
+ * /students/teams:
+ *   get:
+ *     summary: Lấy tất cả nhóm có sẵn
+ *     description: Sinh viên có thể xem danh sách tất cả nhóm. Nếu sinh viên chưa có team, frontend có thể hiển thị nút join hoặc create.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lấy danh sách nhóm thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 teams:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       teamId:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       status:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       membersCount:
+ *                         type: integer
+ *                       maxMembers:
+ *                         type: integer
+ *                       leaderId:
+ *                         type: string
+ *                       leaderName:
+ *                         type: string
+ *       500:
+ *         description: Lỗi server
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  */
 router.get('/teams', verifyToken, async (req, res) => {
   try {
@@ -67,10 +219,58 @@ router.get('/teams', verifyToken, async (req, res) => {
 });
 
 
-// /**
-//  * GET /api/students/requests
-//  * Lấy các request tham gia nhóm của sinh viên hiện tại
-//  */
+/**
+ * @swagger
+ * /students/requests:
+ *   get:
+ *     summary: Lấy các request tham gia nhóm của sinh viên hiện tại
+ *     description: Sinh viên đăng nhập có thể xem danh sách các request đã gửi để tham gia nhóm.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lấy danh sách request thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 requests:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         description: ID của request
+ *                       teamId:
+ *                         type: string
+ *                         description: ID của team
+ *                       teamName:
+ *                         type: string
+ *                         description: Tên team
+ *                       status:
+ *                         type: string
+ *                         description: Trạng thái request (pending, approved, rejected)
+ *                       requested_at:
+ *                         type: string
+ *                         format: date-time
+ *                         description: Thời điểm gửi request
+ *       500:
+ *         description: Lỗi server
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ */
 router.get('/requests', verifyToken, async (req, res) => {
   try {
     const studentId = req.user.id;
@@ -89,13 +289,92 @@ router.get('/requests', verifyToken, async (req, res) => {
 });
 
 
-
+/**
+ * @swagger
+ * /students/join-team/{teamId}:
+ *   post:
+ *     summary: Tham gia một team
+ *     description: Sinh viên đăng nhập có thể gửi yêu cầu tham gia một team nếu chưa thuộc team nào và team còn chỗ trống.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID của team muốn tham gia
+ *     responses:
+ *       200:
+ *         description: Tham gia team thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 team:
+ *                   type: object
+ *                   properties:
+ *                     teamId:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     membersCount:
+ *                       type: integer
+ *                     maxMembers:
+ *                       type: integer
+ *                     leaderId:
+ *                       type: string
+ *                     leaderName:
+ *                       type: string
+ *       400:
+ *         description: Sinh viên đã có team hoặc team full
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Sinh viên hoặc team không tồn tại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Lỗi server
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ */
 router.post('/join-team/:teamId', verifyToken, async (req, res) => {
   try {
     const studentId = req.user.id;
     const { teamId } = req.params;
 
-    // Lấy thông tin student
     const student = await studentModel.findById(studentId);
     if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
 
@@ -103,22 +382,16 @@ router.post('/join-team/:teamId', verifyToken, async (req, res) => {
       return res.status(400).json({ success: false, message: 'You are already in a team' });
     }
 
-    // Lấy thông tin team
     const team = await teamModel.findById(teamId);
     if (!team) return res.status(404).json({ success: false, message: 'Team not found' });
 
-    // Kiểm tra số lượng thành viên
     if (team.SoLuongThanhVienHienTai >= team.SoLuongThanhVienToiDa) {
       return res.status(400).json({ success: false, message: 'Team is full' });
     }
 
-    // Cập nhật team cho student
     await studentModel.joinTeam(studentId, teamId);
-
-    // Lấy lại team mới nhất
     const updatedTeam = await teamModel.findById(teamId);
 
-    // Cập nhật trạng thái nếu đủ thành viên
     if (updatedTeam.SoLuongThanhVienHienTai >= updatedTeam.SoLuongThanhVienToiDa) {
       await teamModel.updateStatus(teamId, 'Voting');
       updatedTeam.TrangThaiNhom = 'Voting';
@@ -136,15 +409,92 @@ router.post('/join-team/:teamId', verifyToken, async (req, res) => {
   }
 });
 
+
 /**
- * GET /api/students/team/:teamId
- * Lấy chi tiết 1 team + danh sách thành viên
+ * @swagger
+ * /students/team/{teamId}:
+ *   get:
+ *     summary: Lấy chi tiết một team cùng danh sách thành viên
+ *     description: Sinh viên đăng nhập có thể xem thông tin chi tiết của một team và danh sách thành viên của team đó.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID của team cần lấy chi tiết
+ *     responses:
+ *       200:
+ *         description: Lấy chi tiết team thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 team:
+ *                   type: object
+ *                   properties:
+ *                     teamId:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     maxMembers:
+ *                       type: integer
+ *                     leaderId:
+ *                       type: string
+ *                     leaderName:
+ *                       type: string
+ *                     currentMembers:
+ *                       type: integer
+ *                     members:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           studentId:
+ *                             type: string
+ *                           fullName:
+ *                             type: string
+ *                           email:
+ *                             type: string
+ *                           role:
+ *                             type: string
+ *       404:
+ *         description: Team không tồn tại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Lỗi server
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  */
 router.get('/team/:teamId', verifyToken, async (req, res) => {
   try {
     const { teamId } = req.params;
 
-    // Lấy thông tin team
     const [teamRows] = await db.query(
       `SELECT 
         t.MaTeam AS teamId,
@@ -167,7 +517,6 @@ router.get('/team/:teamId', verifyToken, async (req, res) => {
 
     const team = teamRows[0];
 
-    // Lấy danh sách thành viên
     const [members] = await db.query(
       `SELECT 
         s.MaSV AS studentId,
@@ -192,13 +541,73 @@ router.get('/team/:teamId', verifyToken, async (req, res) => {
   }
 });
 
-// POST /api/students/leave-team/:teamId
+/**
+ * @swagger
+ * /students/leave-team/{teamId}:
+ *   post:
+ *     summary: Rời khỏi team
+ *     description: Sinh viên đăng nhập có thể rời khỏi team. Nếu sinh viên là leader và còn thành viên khác, leader sẽ được chuyển cho thành viên đầu tiên còn lại. Nếu không còn ai, team sẽ bị xóa.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID của team muốn rời
+ *     responses:
+ *       200:
+ *         description: Rời team thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Sinh viên không thuộc team
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Sinh viên hoặc team không tồn tại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Lỗi server
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ */
 router.post("/leave-team/:teamId", verifyToken, async (req, res) => {
   try {
     const { teamId } = req.params;
-    const studentId = req.user.id; // Lấy từ token
+    const studentId = req.user.id;
 
-    // 1️⃣ Kiểm tra sinh viên có trong team không
     const [studentRows] = await db.query(
       "SELECT Team FROM Student WHERE MaSV = ?",
       [studentId]
@@ -210,7 +619,6 @@ router.post("/leave-team/:teamId", verifyToken, async (req, res) => {
     if (studentRows[0].Team !== teamId)
       return res.status(400).json({ success: false, message: "You are not in this team" });
 
-    // 2️⃣ Kiểm tra nếu sinh viên là leader
     const [teamRows] = await db.query(
       "SELECT LeaderID, SoLuongThanhVienToiDa FROM Team WHERE MaTeam = ?",
       [teamId]
@@ -221,35 +629,27 @@ router.post("/leave-team/:teamId", verifyToken, async (req, res) => {
 
     const team = teamRows[0];
 
-    // Nếu sinh viên là leader
     if (team.LeaderID === studentId) {
-      // Kiểm tra còn thành viên khác không
       const [otherMembers] = await db.query(
         "SELECT MaSV FROM Student WHERE Team = ? AND MaSV != ?",
         [teamId, studentId]
       );
 
       if (otherMembers.length > 0) {
-        // ✅ Gán leader mới là thành viên đầu tiên còn lại
         const newLeaderId = otherMembers[0].MaSV;
-
-        // Lấy tên leader mới
         const [[newLeader]] = await db.query(
           "SELECT HoTen FROM Student WHERE MaSV = ?",
           [newLeaderId]
         );
-
         await db.query(
           "UPDATE Team SET LeaderID = ?, LeaderName = ? WHERE MaTeam = ?",
           [newLeaderId, newLeader.HoTen, teamId]
         );
       } else {
-        // ❌ Nếu không còn ai -> xóa nhóm
         await db.query("DELETE FROM Team WHERE MaTeam = ?", [teamId]);
       }
     }
 
-    // 3️⃣ Cập nhật Student để rời khỏi team
     await db.query("UPDATE Student SET Team = NULL WHERE MaSV = ?", [studentId]);
 
     return res.json({
@@ -266,8 +666,95 @@ router.post("/leave-team/:teamId", verifyToken, async (req, res) => {
 });
 
 /**
- * POST /api/students/create-team
- * Sinh viên tạo nhóm mới (chỉ khi chưa thuộc nhóm nào)
+ * @swagger
+ * /students/create-team:
+ *   post:
+ *     summary: Sinh viên tạo nhóm mới
+ *     description: Sinh viên chỉ có thể tạo nhóm khi chưa thuộc nhóm nào. 
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - maxMembers
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Tên nhóm
+ *               description:
+ *                 type: string
+ *                 description: Mô tả nhóm (tùy chọn)
+ *               maxMembers:
+ *                 type: integer
+ *                 description: Số lượng thành viên tối đa
+ *     responses:
+ *       200:
+ *         description: Tạo nhóm thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 team:
+ *                   type: object
+ *                   properties:
+ *                     teamId:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                     maxMembers:
+ *                       type: integer
+ *                     leaderId:
+ *                       type: string
+ *                     leaderName:
+ *                       type: string
+ *       400:
+ *         description: Thiếu thông tin hoặc sinh viên đã thuộc nhóm
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Sinh viên không tồn tại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Lỗi server
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  */
 router.post("/create-team", verifyToken, async (req, res) => {
   try {
@@ -281,7 +768,6 @@ router.post("/create-team", verifyToken, async (req, res) => {
       });
     }
 
-    // 1️⃣ Kiểm tra sinh viên đã có nhóm chưa
     const [[student]] = await db.query(
       "SELECT HoTen, Team FROM Student WHERE MaSV = ?",
       [studentId]
@@ -293,7 +779,6 @@ router.post("/create-team", verifyToken, async (req, res) => {
     if (student.Team)
       return res.status(400).json({ success: false, message: "You already belong to a team" });
 
-    // 2️⃣ Tạo nhóm mới
     const [result] = await db.query(
       `INSERT INTO Team (TenTeam, MoTaNhom, TrangThaiNhom, SoLuongThanhVienToiDa, LeaderID, LeaderName)
        VALUES (?, ?, 'Pending', ?, ?, ?)`,
@@ -302,10 +787,8 @@ router.post("/create-team", verifyToken, async (req, res) => {
 
     const newTeamId = result.insertId;
 
-    // 3️⃣ Gán nhóm mới cho sinh viên
     await db.query("UPDATE Student SET Team = ? WHERE MaSV = ?", [newTeamId, studentId]);
 
-    // 4️⃣ Lấy thông tin nhóm vừa tạo
     const [[newTeam]] = await db.query(
       `SELECT 
         MaTeam AS teamId,
@@ -333,7 +816,5 @@ router.post("/create-team", verifyToken, async (req, res) => {
     });
   }
 });
-
-
 
 module.exports = router;
