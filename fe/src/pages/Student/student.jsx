@@ -1,13 +1,20 @@
 import { useState, useEffect } from "react";
 import { Layout, Menu, Button, Avatar, Dropdown } from "antd";
-import { MenuFoldOutlined, MenuUnfoldOutlined, DashboardOutlined, TeamOutlined, FileTextOutlined, LogoutOutlined } from "@ant-design/icons";
+import {
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  TeamOutlined,
+  FileTextOutlined,
+  LogoutOutlined,
+  UserAddOutlined,
+} from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useStudentDashboard } from "../../../hooks/useStudentDashboard";
 
-import Dashboard from "./Dashboard";
 import Teams from "./Teams";
-import Posts from "./posts"; // import Posts student version
+import Posts from "./posts";
+import Request from "./Request"; // ✅ import trang Request mới
 
 const { Header, Sider, Content } = Layout;
 
@@ -19,11 +26,10 @@ export default function Student() {
 
   const { student, teams, loading, error } = useStudentDashboard(true);
 
-  // ✅ Handle navigation state to set selected menu
+  // ✅ Đồng bộ menu khi navigate từ nơi khác
   useEffect(() => {
     if (location.state?.selectedMenu) {
       setSelectedMenu(location.state.selectedMenu);
-      // Clear the state after using it
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -37,7 +43,8 @@ export default function Student() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      if (data.success) toast.success(data.message || "Đăng xuất thành công", { duration: 2000 });
+      if (data.success)
+        toast.success(data.message || "Đăng xuất thành công", { duration: 2000 });
       else toast.error("Đăng xuất thất bại");
     } catch (err) {
       console.error(err);
@@ -55,31 +62,53 @@ export default function Student() {
       { key: "1", label: "Profile" },
       { key: "2", label: "Logout", danger: true, icon: <LogoutOutlined /> },
     ],
-    onClick: ({ key }) => { if (key === "2") handleLogout(); },
+    onClick: ({ key }) => {
+      if (key === "2") handleLogout();
+    },
   };
 
-  const menuItems = [
-    // { key: "1", icon: <DashboardOutlined />, label: "Dashboard" },
+  // ---------------- Menu hiển thị ----------------
+const menuItems = [
     { key: "2", icon: <TeamOutlined />, label: "Teams" },
-    { key: "3", icon: <FileTextOutlined />, label: "Posts" }, // đổi label cho rõ
+    { key: "3", icon: <FileTextOutlined />, label: "Posts" },
   ];
 
-  const renderContent = () => {
+  let leaderTeam;
+  let isLeader = false;
+
+  if (!loading && teams?.length > 0 && student) {
+    // 🐞 SỬA LỖI Ở ĐÂY
+    leaderTeam = teams.find((team) => team.leaderId === student.MaSV);
+    isLeader = !!leaderTeam;
+
+    if (isLeader) {
+      menuItems.push({
+        key: "4",
+        icon: <UserAddOutlined />,
+        label: "Request Lecturer",
+      });
+    }
+  }
+
+  // ---------------- Render nội dung ----------------
+const renderContent = () => {
     if (loading) return <p>Loading...</p>;
     if (error) return <p className="text-red-600">{error}</p>;
 
     switch (selectedMenu) {
-      // case "1":
-      //   return <Dashboard student={student} />;
       case "2":
         return <Teams student={student} teams={teams} />;
       case "3":
         return (
           <Posts
             token={localStorage.getItem("token")}
-            currentStudentId={student?.id || student?.MaSV} // đảm bảo lấy đúng id
+            currentStudentId={student?.MaSV} // Thống nhất dùng MaSV
           />
         );
+      case "4":
+        // Bây giờ 'leaderTeam' sẽ có giá trị đúng
+        // Sửa lại thuộc tính ID của team cho chính xác
+        return <Request teamId={leaderTeam?.teamId} />;
       default:
         return null;
     }
@@ -87,9 +116,16 @@ export default function Student() {
 
   return (
     <Layout className="min-h-screen">
-      <Sider collapsible collapsed={collapsed} className="bg-white border-r border-gray-200">
+      {/* Sidebar */}
+      <Sider
+        collapsible
+        collapsed={collapsed}
+        className="bg-white border-r border-gray-200"
+      >
         <div className="h-16 flex items-center justify-center border-b border-gray-200">
-          <h1 className="text-gray-900 font-bold text-xl">{collapsed ? "ST" : "Student"}</h1>
+          <h1 className="text-gray-900 font-bold text-xl">
+            {collapsed ? "ST" : "Student"}
+          </h1>
         </div>
         <Menu
           theme="light"
@@ -100,11 +136,18 @@ export default function Student() {
         />
       </Sider>
 
+      {/* Header + Content */}
       <Layout>
         <Header className="bg-white border-b border-gray-200 px-4 flex items-center justify-between shadow-sm">
-          <Button type="text" icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} onClick={() => setCollapsed(!collapsed)} />
+          <Button
+            type="text"
+            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            onClick={() => setCollapsed(!collapsed)}
+          />
           <Dropdown menu={dropdownMenu} placement="bottomRight" trigger={["click"]}>
-            <Avatar className="cursor-pointer bg-green-600">{student?.HoTen?.[0]}</Avatar>
+            <Avatar className="cursor-pointer bg-green-600">
+              {student?.HoTen?.[0]}
+            </Avatar>
           </Dropdown>
         </Header>
 

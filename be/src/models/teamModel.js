@@ -138,90 +138,48 @@ async voteLeader(teamId, voterId, candidateId) {
 
 
 async sendRequestToLecturer(teamId, leaderId, lecturerId) {
-  // Kiểm tra team và leader
+  // 1️⃣ Kiểm tra team và leader
   const [team] = await db.execute(
-    'SELECT LeaderID FROM Team WHERE MaTeam = ?',
+    'SELECT LeaderID, MentorID FROM Team WHERE MaTeam = ?',
     [teamId]
   );
   if (!team[0]) throw new Error('Team not found');
   if (team[0].LeaderID !== leaderId) throw new Error('Only leader can send request');
 
-  // Tạo request mới hoặc cập nhật pending nếu đã tồn tại
-  await db.execute(
-    `
-    INSERT INTO TeamRequests (teamId, lecturerId)
-    VALUES (?, ?)
-    ON DUPLICATE KEY UPDATE status = 'pending', updatedAt = NOW()
-    `,
-    [teamId, lecturerId]
-  );
-
-  // Lấy lại record vừa tạo / update để trả về client
-  const [rows] = await db.execute(
-    'SELECT * FROM TeamRequests WHERE teamId = ? AND lecturerId = ?',
-    [teamId, lecturerId]
-  );
-
-  return rows[0]; // trả về object request thực tế
-},
-
-async getRequestsForLecturer(lecturerId) {
-  const [rows] = await db.execute(
-    `
-    SELECT r.id, r.teamId, t.TenTeam, r.status, r.createdAt, r.updatedAt
-    FROM TeamRequests r
-    JOIN Team t ON t.MaTeam = r.teamId
-    WHERE r.lecturerId = ?
-    ORDER BY r.createdAt DESC
-    `,
-    [lecturerId]
-  );
-
-  return rows;
-},
-
-async respondRequest(requestId, lecturerId, action) {
-  if (!['accepted','rejected'].includes(action)) throw new Error('Invalid action');
-
-  // Cập nhật status request
-  await db.execute(
-    `
-    UPDATE TeamRequests
-    SET status = ?, updatedAt = NOW()
-    WHERE id = ? AND lecturerId = ?
-    `,
-    [action, requestId, lecturerId]
-  );
-
-  // Nếu accept, update Mentor trực tiếp trong Team
-  if (action === 'accepted') {
-    const [[request]] = await db.execute(
-      'SELECT teamId FROM TeamRequests WHERE id = ?',
-      [requestId]
-    );
-    const [[lecturer]] = await db.execute(
+  // 2️⃣ Kiểm tra nếu team đã có giảng viên đồng ý
+  if (team[0].MentorID) {
+    const [[mentor]] = await db.execute(
       'SELECT HoTen FROM Lecture WHERE MaGV = ?',
-      [lecturerId]
+      [team[0].MentorID]
     );
-
-    await db.execute(
-      `
-      UPDATE Team
-      SET MentorID = ?, MentorName = ?
-      WHERE MaTeam = ?
-      `,
-      [lecturerId, lecturer.HoTen, request.teamId]
-    );
+    throw new Error(`Team này đã có giảng viên đồng ý: ${mentor.HoTen}`);
   }
 
-  // Lấy lại request sau khi cập nhật để trả về client
+  // 3️⃣ Kiểm tra nếu có request đang pending
+  const [pending] = await db.execute(
+    'SELECT * FROM TeamRequests WHERE teamId = ? AND status = "pending"',
+    [teamId]
+  );
+  if (pending.length > 0) {
+    throw new Error('Team này đang chờ phản hồi từ giảng viên khác');
+  }
+
+  // 4️⃣ Tạo request mới
+  await db.execute(
+    `INSERT INTO TeamRequests (teamId, lecturerId, status, createdAt, updatedAt)
+     VALUES (?, ?, 'pending', NOW(), NOW())`,
+    [teamId, lecturerId]
+  );
+
+  // 5️⃣ Lấy lại request vừa tạo để trả về
   const [rows] = await db.execute(
-    'SELECT * FROM TeamRequests WHERE id = ?',
-    [requestId]
+    'SELECT * FROM TeamRequests WHERE teamId = ? AND lecturerId = ? ORDER BY createdAt DESC LIMIT 1',
+    [teamId, lecturerId]
   );
 
   return rows[0];
 }
+
 };
 
 

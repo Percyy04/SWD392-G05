@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, List, Tag, Button, Popconfirm, Modal, Radio, Avatar, Space, Divider, Badge, Spin } from "antd";
-import { 
-  ArrowLeftOutlined, 
-  UserOutlined, 
-  TeamOutlined, 
-  CrownOutlined, 
+import {
+  ArrowLeftOutlined,
+  UserOutlined,
+  TeamOutlined,
+  CrownOutlined,
   LogoutOutlined,
   TrophyOutlined,
   CheckCircleOutlined,
@@ -129,7 +129,7 @@ export default function TeamDetail() {
                 size="small"
                 bordered
                 dataSource={data.votes}
-                renderItem={(v, idx) => (
+                renderItem={(v) => (
                   <List.Item>
                     <Space>
                       <CheckCircleOutlined style={{ color: '#52c41a' }} />
@@ -167,14 +167,14 @@ export default function TeamDetail() {
       </div>
     );
   }
-  
+
   if (!team) {
     return (
       <div className="text-center py-20">
         <p className="text-gray-500 text-lg">Không tìm thấy nhóm</p>
-        <Button 
-          type="primary" 
-          icon={<ArrowLeftOutlined />} 
+        <Button
+          type="primary"
+          icon={<ArrowLeftOutlined />}
           onClick={() => navigate(-1)}
           className="mt-4"
         >
@@ -197,8 +197,8 @@ export default function TeamDetail() {
     <div className="max-w-5xl mx-auto p-6">
       {/* Header with back button */}
       <div className="mb-6">
-        <Button 
-          icon={<ArrowLeftOutlined />} 
+        <Button
+          icon={<ArrowLeftOutlined />}
           onClick={() => navigate(-1)}
           size="large"
           type="text"
@@ -209,16 +209,16 @@ export default function TeamDetail() {
       </div>
 
       {/* Main Team Card */}
-      <Card 
+      <Card
         className="shadow-lg rounded-xl border-0"
         bordered={false}
       >
         {/* Team Header */}
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-4">
-            <Avatar 
-              size={64} 
-              icon={<TeamOutlined />} 
+            <Avatar
+              size={64}
+              icon={<TeamOutlined />}
               className="bg-gradient-to-br from-blue-500 to-purple-600"
             />
             <div>
@@ -256,6 +256,18 @@ export default function TeamDetail() {
             </Space>
           </Card>
         </div>
+        {/* Mentor Section */}
+        {team.mentorId && (
+          <Card type="inner" className="bg-yellow-50 border-yellow-200 mb-6">
+            <div className="flex items-center gap-2 mb-2">
+              <UserOutlined className="text-yellow-500 text-xl" />
+              <span className="font-semibold text-gray-700">Giảng viên hướng dẫn:</span>
+            </div>
+            <p className="text-lg font-bold text-yellow-700 ml-7">
+              {team.mentorName || "Không có"}
+            </p>
+          </Card>
+        )}
 
         {/* Description */}
         {team.description && (
@@ -265,6 +277,8 @@ export default function TeamDetail() {
           </Card>
         )}
 
+
+
         {/* Vote Section */}
         {isMember && (
           <Card type="inner" className="bg-purple-50 border-purple-200 mb-6">
@@ -273,11 +287,11 @@ export default function TeamDetail() {
                 <TrophyOutlined className="text-purple-500 text-2xl" />
                 <span className="font-semibold text-gray-700">Bình chọn trưởng nhóm</span>
               </div>
-              
+
               <Space>
                 {!hasVoted ? (
-                  <Button 
-                    type="primary" 
+                  <Button
+                    type="primary"
                     icon={<TrophyOutlined />}
                     onClick={() => setIsVoteModalOpen(true)}
                     size="large"
@@ -290,9 +304,9 @@ export default function TeamDetail() {
                     Bạn đã bình chọn
                   </Tag>
                 )}
-                
-                <Button 
-                  icon={<BarChartOutlined />} 
+
+                <Button
+                  icon={<BarChartOutlined />}
                   onClick={handleViewVotes}
                   size="large"
                 >
@@ -303,13 +317,16 @@ export default function TeamDetail() {
           </Card>
         )}
 
+
+
+
         {/* Members List */}
         <div className="mb-6">
           <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
             <TeamOutlined />
             Danh sách thành viên
           </h3>
-          
+
           <List
             className="bg-white"
             bordered
@@ -318,8 +335,8 @@ export default function TeamDetail() {
               <List.Item className="hover:bg-gray-50 transition-colors">
                 <List.Item.Meta
                   avatar={
-                    <Avatar 
-                      size={48} 
+                    <Avatar
+                      size={48}
                       icon={<UserOutlined />}
                       className={member.studentId === team.leaderId ? "bg-yellow-500" : "bg-blue-500"}
                     />
@@ -357,8 +374,8 @@ export default function TeamDetail() {
               cancelText="Hủy"
               okButtonProps={{ danger: true }}
             >
-              <Button 
-                danger 
+              <Button
+                danger
                 icon={<LogoutOutlined />}
                 size="large"
                 type="primary"
@@ -387,7 +404,7 @@ export default function TeamDetail() {
       >
         <Divider />
         <p className="text-gray-600 mb-4">Chọn thành viên mà bạn muốn bình chọn làm trưởng nhóm:</p>
-        
+
         <Radio.Group
           onChange={(e) => setCandidateId(e.target.value)}
           style={{ width: "100%" }}

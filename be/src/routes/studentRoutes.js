@@ -504,6 +504,8 @@ router.get('/team/:teamId', verifyToken, async (req, res) => {
         t.SoLuongThanhVienToiDa AS maxMembers,
         t.LeaderID AS leaderId,
         t.LeaderName AS leaderName,
+        t.MentorID AS mentorId,       -- Thêm
+        t.MentorName AS mentorName,   -- Thêm
         (
           SELECT COUNT(*) FROM Student s WHERE s.Team = t.MaTeam
         ) AS currentMembers
@@ -540,6 +542,7 @@ router.get('/team/:teamId', verifyToken, async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
 
 /**
  * @swagger
