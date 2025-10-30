@@ -68,25 +68,22 @@ export default function Student() {
   };
 
   // ---------------- Menu hiển thị ----------------
-const menuItems = [
+  const menuItems = [
     { key: "2", icon: <TeamOutlined />, label: "Teams" },
     { key: "3", icon: <FileTextOutlined />, label: "Posts" },
+    { key: "4", icon: <UserAddOutlined />, label: "Request Lecturer" }, // ✅ Luôn hiển thị
   ];
 
-  let leaderTeam;
+  let currentTeam; // Team mà student đã tham gia (dù có phải leader hay không)
   let isLeader = false;
 
   if (!loading && teams?.length > 0 && student) {
-    // 🐞 SỬA LỖI Ở ĐÂY
-    leaderTeam = teams.find((team) => team.leaderId === student.MaSV);
-    isLeader = !!leaderTeam;
-
-    if (isLeader) {
-      menuItems.push({
-        key: "4",
-        icon: <UserAddOutlined />,
-        label: "Request Lecturer",
-      });
+    // Tìm team mà student đã tham gia (theo student.Team)
+    currentTeam = teams.find((team) => String(team.teamId) === String(student.Team));
+    
+    // Check xem có phải leader của team đó không
+    if (currentTeam) {
+      isLeader = String(currentTeam.leaderId) === String(student.MaSV);
     }
   }
 
@@ -106,9 +103,8 @@ const renderContent = () => {
           />
         );
       case "4":
-        // Bây giờ 'leaderTeam' sẽ có giá trị đúng
-        // Sửa lại thuộc tính ID của team cho chính xác
-        return <Request teamId={leaderTeam?.teamId} />;
+        // Truyền team hiện tại (dù có phải leader hay không) và trạng thái isLeader
+        return <Request teamId={currentTeam?.teamId} isLeader={isLeader} />;
       default:
         return null;
     }
