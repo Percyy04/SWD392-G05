@@ -1,13 +1,26 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, Button, Spin, Empty, Tag, Avatar, Space, Badge, Row, Col, Divider, Modal } from "antd";
+import { io } from "socket.io-client";
+import {
+  Card,
+  Button,
+  Spin,
+  Empty,
+  Tag,
+  Avatar,
+  Space,
+  Badge,
+  Row,
+  Col,
+  Divider,
+  Modal,
+} from "antd";
 import {
   UserOutlined,
   MailOutlined,
   CheckCircleOutlined,
   SendOutlined,
   TeamOutlined,
-  StarOutlined,
   InfoCircleOutlined,
   CrownOutlined,
   ExclamationCircleOutlined,
@@ -16,7 +29,9 @@ import {
 import toast from "react-hot-toast";
 import { useTeamRequests } from "../../../hooks/useTeamRequests";
 
-export default function Request({ teamId, isLeader }) {
+const SOCKET_URL = "http://localhost:5000"; // thay bằng URL backend của bạn
+
+export default function Request({ teamId, isLeader, user }) {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
@@ -25,16 +40,64 @@ export default function Request({ teamId, isLeader }) {
     loading,
     sendRequest,
     sentRequests,
-    approvedMentor, // Thêm hook trả về giảng viên đã accept nếu có
+    approvedMentor,
+    setApprovedMentor,
+    setSentRequests,
+    fetchLecturers,
   } = useTeamRequests(teamId);
 
-  
+  // ----------------------
+  // ✅ Socket setup để nhận notification từ lecturer
+  // ----------------------
+  useEffect(() => {
+    if (!token || !user || user.role !== "Student") return;
 
-  // ✅ Hàm check leader trước khi gửi request
+    const socket = io(SOCKET_URL, { auth: { token } });
+
+    socket.on("connect", () => console.log("✅ Socket connected:", socket.id));
+    socket.on("disconnect", () => console.log("❌ Socket disconnected"));
+
+    // Join student room
+    const studentId = user.id || user._id;
+    socket.emit("join_student_room", { studentId });
+    console.log(`🎓 Joined student room: student_${studentId}`);
+
+    // Lắng nghe phản hồi từ lecturer
+    socket.on("lecturer_response", (data) => {
+      console.log("📩 Received lecturer response:", data);
+
+      if (data.status === "accept") {
+        toast.success(data.message);
+        setApprovedMentor({
+          HoTen: data.lecturerName || "Giảng viên",
+          Email: data.lecturerEmail || "",
+        });
+      } else {
+        toast.error(data.message);
+      }
+
+      setSentRequests((prev) =>
+        prev.filter((id) => id !== data.lecturerId)
+      );
+
+      fetchLecturers(); // refresh danh sách lecturers
+    });
+
+    return () => socket.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, user, teamId]);
+
+  // ----------------------
+  // ✅ Gửi request tới giảng viên
+  // ----------------------
   const handleSendRequest = (lecturerId) => {
     if (!isLeader) {
       Modal.warning({
-        title: <span><WarningOutlined /> Không có quyền</span>,
+        title: (
+          <span>
+            <WarningOutlined /> Không có quyền
+          </span>
+        ),
         content: (
           <div className="py-2">
             <p className="text-gray-700">
@@ -47,15 +110,16 @@ export default function Request({ teamId, isLeader }) {
         ),
         okText: "Đã hiểu",
         centered: true,
-        icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
+        icon: <ExclamationCircleOutlined style={{ color: "#faad14" }} />,
       });
       return;
     }
-    
-    // Nếu là leader thì gửi request
     sendRequest(lecturerId);
   };
 
+  // ----------------------
+  // 🔹 Điều kiện hiển thị UI
+  // ----------------------
   if (!token) {
     toast.error("Vui lòng đăng nhập!");
     navigate("/login");
@@ -79,8 +143,8 @@ export default function Request({ teamId, isLeader }) {
               </div>
             }
           >
-            <Button 
-              type="primary" 
+            <Button
+              type="primary"
               onClick={() => navigate("/student")}
               className="mt-4"
             >
@@ -103,32 +167,31 @@ export default function Request({ teamId, isLeader }) {
   if (approvedMentor) {
     return (
       <div className="max-w-4xl mx-auto p-6">
-        {/* Header */}
         <div className="mb-6">
-          <Card 
+          <Card
             className="bg-gradient-to-r from-green-500 to-emerald-600 border-0 shadow-lg"
-            bodyStyle={{ padding: '24px' }}
+            bodyStyle={{ padding: "24px" }}
           >
             <div className="flex items-center gap-3">
               <div className="bg-white rounded-full p-3">
                 <CheckCircleOutlined className="text-3xl text-green-600" />
               </div>
               <div className="text-white">
-                <h2 className="text-2xl font-bold mb-1">Nhóm Đã Có Giảng Viên Hướng Dẫn</h2>
-                <p className="text-green-100">Giảng viên đã chấp nhận hướng dẫn nhóm của bạn</p>
+                <h2 className="text-2xl font-bold mb-1">
+                  Nhóm Đã Có Giảng Viên Hướng Dẫn
+                </h2>
+                <p className="text-green-100">
+                  Giảng viên đã chấp nhận hướng dẫn nhóm của bạn
+                </p>
               </div>
             </div>
           </Card>
         </div>
 
-        {/* Mentor Info Card */}
-        <Card
-          className="shadow-xl border-0"
-          bodyStyle={{ padding: '32px' }}
-        >
+        <Card className="shadow-xl border-0" bodyStyle={{ padding: "32px" }}>
           <div className="text-center mb-6">
-            <Avatar 
-              size={120} 
+            <Avatar
+              size={120}
               icon={<UserOutlined />}
               className="bg-gradient-to-br from-green-500 to-emerald-600 mb-4"
             >
@@ -137,7 +200,11 @@ export default function Request({ teamId, isLeader }) {
             <h3 className="text-2xl font-bold text-gray-800 mb-2">
               {approvedMentor.HoTen}
             </h3>
-            <Tag icon={<CrownOutlined />} color="gold" className="text-base px-4 py-1">
+            <Tag
+              icon={<CrownOutlined />}
+              color="gold"
+              className="text-base px-4 py-1"
+            >
               Giảng viên hướng dẫn
             </Tag>
           </div>
@@ -190,9 +257,9 @@ export default function Request({ teamId, isLeader }) {
     <div className="max-w-7xl mx-auto p-6">
       {/* Header Section */}
       <div className="mb-6">
-        <Card 
+        <Card
           className="bg-gradient-to-r from-purple-500 to-pink-600 border-0 shadow-lg"
-          bodyStyle={{ padding: '24px' }}
+          bodyStyle={{ padding: "24px" }}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -200,14 +267,18 @@ export default function Request({ teamId, isLeader }) {
                 <TeamOutlined className="text-3xl text-purple-600" />
               </div>
               <div className="text-white">
-                <h2 className="text-2xl font-bold mb-1">Yêu Cầu Giảng Viên Hướng Dẫn</h2>
-                <p className="text-purple-100">Gửi yêu cầu đến giảng viên để được hướng dẫn đề tài</p>
+                <h2 className="text-2xl font-bold mb-1">
+                  Yêu Cầu Giảng Viên Hướng Dẫn
+                </h2>
+                <p className="text-purple-100">
+                  Gửi yêu cầu đến giảng viên để được hướng dẫn đề tài
+                </p>
               </div>
             </div>
-            <Badge 
-              count={lecturers.length} 
-              showZero 
-              style={{ backgroundColor: '#fff', color: '#a855f7' }}
+            <Badge
+              count={lecturers.length}
+              showZero
+              style={{ backgroundColor: "#fff", color: "#a855f7" }}
               className="text-lg"
             />
           </div>
@@ -223,12 +294,12 @@ export default function Request({ teamId, isLeader }) {
             <Col xs={24} sm={12} md={8} lg={6} key={lec.MaGV}>
               <Card
                 className="h-full shadow-md hover:shadow-xl transition-all duration-300 border-0"
-                bodyStyle={{ padding: '24px' }}
+                bodyStyle={{ padding: "24px" }}
               >
                 {/* Avatar & Name */}
                 <div className="text-center mb-4">
-                  <Avatar 
-                    size={80} 
+                  <Avatar
+                    size={80}
                     icon={<UserOutlined />}
                     className="bg-gradient-to-br from-purple-500 to-pink-600 mb-3"
                   >

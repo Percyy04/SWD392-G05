@@ -2,7 +2,7 @@ require('dotenv').config({ path: __dirname + '/.env' });
 
 const express = require('express');
 const cors = require('cors');
-const http = require('http'); // cần tạo server cho socket
+const http = require('http');
 const { swaggerUi, swaggerDocs } = require('./src/docs/swagger');
 const adminRoutes = require('./src/routes/adminRoutes');
 const teamRoutes = require('./src/routes/teamRoutes');
@@ -11,7 +11,7 @@ const voteRoutes = require('./src/routes/voteRoutes');
 const postRoutes = require('./src/routes/postRoutes');
 const teamRequestRoutes = require('./src/routes/teamRequestRoutes');
 const lecturerRequestRoutes = require('./src/routes/lecturerRequestRoutes');
-const jwt = require('jsonwebtoken'); // để xác thực token Socket.IO
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -52,18 +52,20 @@ const io = new Server(server, {
 });
 app.set("io", io);
 
-// Middleware xác thực Socket.IO (tùy chọn)
+// --------------------
+// Socket.IO auth middleware (optional)
+// --------------------
 io.use((socket, next) => {
   const token = socket.handshake.auth?.token;
-  if (!token) return next(); // nếu muốn bắt buộc, hãy next(new Error("Auth required"));
+  if (!token) return next(); // Không bắt buộc auth
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    socket.user = decoded; // gán thông tin user cho socket
+    socket.user = decoded;
     next();
   } catch (err) {
     console.warn('⚠️ Socket.IO auth failed:', err.message);
-    next(); // vẫn cho connect nếu không muốn bắt buộc
+    next(); // vẫn cho phép connect nếu không muốn bắt buộc
   }
 });
 
@@ -87,28 +89,43 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Student gửi request -> notify admin realtime
+  // Student gửi request -> notify admin & student
   socket.on('student_request', (requestData) => {
     console.log('📨 New student request:', requestData);
 
+    // Gửi đến admin
     io.to('admins').emit('new_request', requestData);
 
+    // Gửi confirmation đến student
     if (requestData.studentId) {
       io.to(`student_${requestData.studentId}`).emit('request_sent', requestData);
     }
   });
 
-  // --------------------
-  // Realtime cho Posts & Comments
-  // --------------------
+  // Posts & Comments realtime
   socket.on('new_post', (post) => {
     console.log('📝 New post created:', post);
-    io.emit('post_created', post); // phát cho tất cả client
+    io.emit('post_created', post);
+  });
+
+  socket.on('update_post', (post) => {
+    console.log('✏️ Post updated:', post);
+    io.emit('post_updated', post);
+  });
+
+  socket.on('delete_post', ({ id }) => {
+    console.log('🗑️ Post deleted:', id);
+    io.emit('post_deleted', { id });
   });
 
   socket.on('new_comment', (comment) => {
     console.log('💬 New comment added:', comment);
-    io.emit('comment_created', comment); // phát cho tất cả client
+    io.emit('comment_created', comment);
+  });
+
+  socket.on('delete_comment', ({ postId, commentId }) => {
+    console.log('🗑️ Comment deleted:', commentId);
+    io.emit('comment_deleted', { postId, commentId });
   });
 
   socket.on('disconnect', () => {
@@ -116,8 +133,9 @@ io.on('connection', (socket) => {
   });
 });
 
-
+// --------------------
 // Start server
+// --------------------
 server.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
   console.log(`📘 Swagger Docs: http://localhost:${PORT}/api-docs`);

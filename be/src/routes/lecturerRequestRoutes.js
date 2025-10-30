@@ -100,22 +100,67 @@ router.get("/requests", verifyToken, verifyLecturer, async (req, res) => {
 // ---------------------------
 // 🧩 4️⃣ Lecturer phản hồi request (accept/reject)
 // ---------------------------
+// 🧩 4️⃣ Lecturer phản hồi request (accept/reject)
 router.patch("/requests/:requestId/respond", verifyToken, verifyLecturer, async (req, res) => {
   try {
-    console.log("Request params:", req.params);
-    console.log("Request body:", req.body);
-    console.log("Lecturer id:", req.user.id);
-
+    const io = req.app.get("io"); // Lấy io từ app
     const { action } = req.body;
-    const result = await teamModel.respondRequest(req.params.requestId, req.user.id, action);
+    const lecturerId = req.user.id;
+    const requestId = req.params.requestId;
 
-    console.log("Respond result:", result);
-    res.status(200).json({ success: true, data: result });
+    // Cập nhật DB (trả về teamId, leaderId, ...)
+    const result = await teamModel.respondRequest(requestId, lecturerId, action);
+
+    // Lấy thông tin leader để gửi thông báo
+    const [teamRows] = await db.query(
+      `SELECT t.LeaderID, s.HoTen AS LeaderName, t.TenTeam
+       FROM Team t
+       JOIN Student s ON t.LeaderID = s.MaSV
+       WHERE t.MaTeam = ?`,
+      [result.teamId]
+    );
+
+    if (teamRows.length > 0) {
+      const leader = teamRows[0];
+
+      // Lấy thông tin giảng viên
+      const [lecturerRows] = await db.query(
+        `SELECT HoTen, Email FROM Lecture WHERE MaGV = ?`,
+        [lecturerId]
+      );
+      const lecturer = lecturerRows[0] || {};
+
+      // Gửi realtime đến phòng của leader
+      const room = `student_${leader.LeaderID}`;
+      const message =
+        action === "accept"
+          ? `✅ Giảng viên đã chấp nhận hướng dẫn nhóm "${leader.TenTeam}".`
+          : `❌ Giảng viên đã từ chối yêu cầu hướng dẫn nhóm "${leader.TenTeam}".`;
+
+      io.to(room).emit("lecturer_response", {
+        teamId: result.teamId,
+        lecturerId,
+        status: action,
+        message,
+        timestamp: new Date(),
+        lecturerName: lecturer.HoTen,
+        lecturerEmail: lecturer.Email,
+      });
+
+      console.log(`📢 Sent notification to ${room}:`, message);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Phản hồi thành công",
+      data: result,
+    });
   } catch (err) {
     console.error("❌ Error responding request:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
 
 
 
