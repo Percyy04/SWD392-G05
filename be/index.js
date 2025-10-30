@@ -9,6 +9,8 @@ const teamRoutes = require('./src/routes/teamRoutes');
 const studentRoutes = require('./src/routes/studentRoutes');
 const voteRoutes = require('./src/routes/voteRoutes');
 const postRoutes = require('./src/routes/postRoutes');
+const teamRequestRoutes = require('./src/routes/teamRequestRoutes');
+const lecturerRequestRoutes = require('./src/routes/lecturerRequestRoutes');
 const jwt = require('jsonwebtoken'); // để xác thực token Socket.IO
 
 const app = express();
@@ -33,6 +35,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/vote', voteRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/team-requests', teamRequestRoutes);
+app.use('/api/lecturer-requests', lecturerRequestRoutes);
 
 // Root
 app.get('/', (req, res) => res.send('Backend is running!'));

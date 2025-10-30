@@ -98,20 +98,20 @@ export function Lecturers() {
           <span className="text-gray-400 text-sm">—</span>
         ),
     },
-    {
-      title: "Team",
-      dataIndex: "team",
-      key: "team",
-      width: 150,
-      render: (team) =>
-        team ? (
-          <Tag color="purple" className="px-3 py-1">
-            {team}
-          </Tag>
-        ) : (
-          <span className="text-gray-400 text-sm">—</span>
-        ),
-    },
+    // {
+    //   title: "Team",
+    //   dataIndex: "team",
+    //   key: "team",
+    //   width: 150,
+    //   render: (team) =>
+    //     team ? (
+    //       <Tag color="purple" className="px-3 py-1">
+    //         {team}
+    //       </Tag>
+    //     ) : (
+    //       <span className="text-gray-400 text-sm">—</span>
+    //     ),
+    // },
     {
       title: "Actions",
       key: "actions",

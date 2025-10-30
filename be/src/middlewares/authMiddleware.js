@@ -31,3 +31,11 @@ exports.verifyAdmin = (req, res, next) => {
   }
   next();
 };
+
+// Middleware kiểm tra Lecturer
+exports.verifyLecturer = (req, res, next) => {
+  if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+  if (req.user.role !== 'Lecturer') return res.status(403).json({ message: 'Access denied. Lecturer only.' });
+  next();
+};
+
