@@ -338,7 +338,7 @@ export default function TeamDetail() {
                     <Avatar
                       size={48}
                       icon={<UserOutlined />}
-                      className={member.studentId === team.leaderId ? "bg-yellow-500" : "bg-blue-500"}
+                      className={member.studentId === team.leaderId ? "bg-yellow-500" : "bg-green-500"}
                     />
                   }
                   title={
