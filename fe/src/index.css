@@ -76,3 +76,13 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground));
 }
+
+.ant-message {
+  z-index: 9999 !important;
+}
+
+.dark .ant-message-notice {
+  background: #333; /* hoặc màu bạn muốn */
+  color: #fff;
+}
+
