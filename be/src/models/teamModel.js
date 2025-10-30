@@ -221,19 +221,26 @@ async respondRequest(requestId, lecturerId, action) {
   }
 
   // 4️⃣ Nếu accept, cập nhật luôn MentorID cho Team
-  if (status === "accepted") {
-    const [[request]] = await db.execute(
-      'SELECT teamId FROM TeamRequests WHERE id = ?',
-      [requestId]
+if (status === "accepted") {
+  const [[request]] = await db.execute(
+    'SELECT teamId FROM TeamRequests WHERE id = ?',
+    [requestId]
+  );
+
+  if (request) {
+    // Lấy tên giảng viên từ bảng Lecture
+    const [[lecturer]] = await db.execute(
+      'SELECT HoTen FROM Lecture WHERE MaGV = ?',
+      [lecturerId]
     );
 
-    if (request) {
-      await db.execute(
-        'UPDATE Team SET MentorID = ? WHERE MaTeam = ?',
-        [lecturerId, request.teamId]
-      );
-    }
+    await db.execute(
+      'UPDATE Team SET MentorID = ?, MentorName = ? WHERE MaTeam = ?',
+      [lecturerId, lecturer.HoTen, request.teamId]
+    );
   }
+}
+
 
   // 5️⃣ Trả về dữ liệu request sau khi update (có thể dùng cho frontend Table)
   const [updated] = await db.execute(

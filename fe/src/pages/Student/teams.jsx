@@ -1,8 +1,8 @@
 import { Card, Button, Modal, Tag, Avatar, Space, Badge, Spin, Empty, Row, Col } from "antd";
-import { 
-  ExclamationCircleOutlined, 
-  TeamOutlined, 
-  UserOutlined, 
+import {
+  ExclamationCircleOutlined,
+  TeamOutlined,
+  UserOutlined,
   CrownOutlined,
   UsergroupAddOutlined,
   EyeOutlined,
@@ -41,10 +41,10 @@ export default function Teams() {
           prev.map(t =>
             String(t.teamId) === String(teamId)
               ? {
-                  ...t,
-                  membersCount: data.team.SoLuongThanhVienHienTai || t.membersCount,
-                  status: data.team.TrangThaiNhom 
-                }
+                ...t,
+                membersCount: data.team.SoLuongThanhVienHienTai || t.membersCount,
+                status: data.team.TrangThaiNhom
+              }
               : t
           )
         );
@@ -67,31 +67,31 @@ export default function Teams() {
     }
   };
 
-const showJoinConfirm = (team) => {
-  Modal.confirm({
-    title: <span><TeamOutlined /> Xác nhận tham gia nhóm</span>,
-    icon: <ExclamationCircleOutlined style={{ color: '#1890ff' }} />,
-    content: (
-      <div className="py-2">
-        <p className="font-semibold text-gray-700 mb-2">Mô tả nhóm:</p>
-        <p style={{ whiteSpace: "pre-line", marginTop: 4, color: '#666' }}>
-          {team.description || "Không có mô tả."}
-        </p>
+  const showJoinConfirm = (team) => {
+    Modal.confirm({
+      title: <span><TeamOutlined /> Xác nhận tham gia nhóm</span>,
+      icon: <ExclamationCircleOutlined style={{ color: '#1890ff' }} />,
+      content: (
+        <div className="py-2">
+          <p className="font-semibold text-gray-700 mb-2">Mô tả nhóm:</p>
+          <p style={{ whiteSpace: "pre-line", marginTop: 4, color: '#666' }}>
+            {team.description || "Không có mô tả."}
+          </p>
 
-        <p className="mt-4 text-gray-600">
-          Bạn có chắc chắn muốn tham gia nhóm này không?
-        </p>
-      </div>
-    ),
-    okText: "Tham gia ngay",
-    cancelText: "Hủy",
-    centered: true,
-    onOk: () => handleJoinTeam(team.teamId),
-    okButtonProps: {
-      icon: <CheckCircleOutlined />
-    }
-  });
-};
+          <p className="mt-4 text-gray-600">
+            Bạn có chắc chắn muốn tham gia nhóm này không?
+          </p>
+        </div>
+      ),
+      okText: "Tham gia ngay",
+      cancelText: "Hủy",
+      centered: true,
+      onOk: () => handleJoinTeam(team.teamId),
+      okButtonProps: {
+        icon: <CheckCircleOutlined />
+      }
+    });
+  };
 
 
   if (loading) {
@@ -114,7 +114,7 @@ const showJoinConfirm = (team) => {
   const sortedTeams = [...teams].sort((a, b) => {
     const aIsJoined = String(a.teamId) === String(student?.Team);
     const bIsJoined = String(b.teamId) === String(student?.Team);
-    
+
     if (aIsJoined && !bIsJoined) return -1;
     if (!aIsJoined && bIsJoined) return 1;
     return 0;
@@ -132,7 +132,7 @@ const showJoinConfirm = (team) => {
     <div className="max-w-7xl mx-auto p-6">
       {/* Header Section */}
       <div className="mb-6">
-        <Card 
+        <Card
           className="bg-gradient-to-r from-green-500 to-teal-600 border-0 shadow-lg"
           bodyStyle={{ padding: '24px' }}
         >
@@ -144,15 +144,15 @@ const showJoinConfirm = (team) => {
               <div className="text-white">
                 <h2 className="text-2xl font-bold mb-1">Danh Sách Nhóm</h2>
                 <p className="text-green-100">
-                  {student?.Team 
-                    ? "Bạn đã tham gia một nhóm. Khám phá các nhóm khác!" 
+                  {student?.Team
+                    ? "Bạn đã tham gia một nhóm. Khám phá các nhóm khác!"
                     : "Chọn một nhóm để tham gia và bắt đầu làm việc nhóm"}
                 </p>
               </div>
             </div>
-            <Badge 
-              count={teams.length} 
-              showZero 
+            <Badge
+              count={teams.length}
+              showZero
               style={{ backgroundColor: '#fff', color: '#10b981' }}
               className="text-lg"
             />
@@ -178,16 +178,15 @@ const showJoinConfirm = (team) => {
             return (
               <Col xs={24} sm={24} md={12} lg={8} key={team.teamId}>
                 <Card
-                  className={`h-full shadow-md hover:shadow-xl transition-all duration-300 border-0 ${
-                    isMyTeam ? 'ring-2 ring-green-500' : ''
-                  }`}
+                  className={`h-full shadow-md hover:shadow-xl transition-all duration-300 border-0 ${isMyTeam ? 'ring-2 ring-green-500' : ''
+                    }`}
                   bodyStyle={{ padding: '24px' }}
                 >
                   {/* Team Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3 flex-1">
-                      <Avatar 
-                        size={56} 
+                      <Avatar
+                        size={56}
                         icon={<TeamOutlined />}
                         className="bg-gradient-to-br from-green-500 to-teal-600 flex-shrink-0"
                       />
@@ -200,10 +199,10 @@ const showJoinConfirm = (team) => {
                         </Tag>
                       </div>
                     </div>
-                    
+
                     {isMyTeam && (
-                      <Tag 
-                        icon={<CheckCircleOutlined />} 
+                      <Tag
+                        icon={<CheckCircleOutlined />}
                         color="success"
                         className="px-3 py-1"
                       >
@@ -231,15 +230,13 @@ const showJoinConfirm = (team) => {
                       </Space>
                     </Card>
 
-                    <Card type="inner" size="small" className={`${
-                      isFull ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
-                    }`}>
+                    <Card type="inner" size="small" className={`${isFull ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
+                      }`}>
                       <Space>
                         <UsergroupAddOutlined className={isFull ? 'text-red-500' : 'text-green-500'} />
                         <span className="text-sm text-gray-600">Thành viên:</span>
-                        <span className={`text-sm font-semibold ${
-                          isFull ? 'text-red-600' : 'text-green-600'
-                        }`}>
+                        <span className={`text-sm font-semibold ${isFull ? 'text-red-600' : 'text-green-600'
+                          }`}>
                           {team.membersCount} / {team.maxMembers}
                         </span>
                         {isFull && <Tag color="volcano" className="text-xs">Đã đầy</Tag>}
@@ -260,19 +257,36 @@ const showJoinConfirm = (team) => {
                       >
                         Xem nhóm của tôi
                       </Button>
-                    ) : (
-                      <Button
-                        type="default"
-                        icon={<InfoCircleOutlined />}
-                        onClick={() => navigate(`/student/team/${team.teamId}`)}
-                        size="large"
-                        block
-                        className="font-semibold"
-                      >
-                        Xem chi tiết
+                    ) : isFull ? (
+                      <Button type="default" disabled block className="font-semibold">
+                        Nhóm đã đầy
                       </Button>
+                    ) : (
+<Button
+  type="primary"
+  onClick={() => showJoinConfirm(team)}
+  size="large"
+  block
+  disabled={
+    loadingTeamId === team.teamId ||                // đang join
+    !!student?.Team ||                              // đã có nhóm
+    isFull                                          // nhóm đã đầy
+  }
+  className="bg-gradient-to-r from-blue-500 to-indigo-600 border-0 font-semibold disabled:opacity-60"
+>
+  {loadingTeamId === team.teamId
+    ? "Đang tham gia..."
+    : student?.Team
+    ? "Đã tham gia nhóm khác"
+    : isFull
+    ? "Nhóm đã đầy"
+    : "Tham gia ngay"}
+</Button>
+
+
                     )}
                   </div>
+
                 </Card>
               </Col>
             );

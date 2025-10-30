@@ -12,6 +12,7 @@ export function useTeamRequests(teamId) {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [sentRequests, setSentRequests] = useState([]);
+  const [approvedMentor, setApprovedMentor] = useState(null);
   const token = localStorage.getItem("token");
 
   // ----------- 🧩 Lấy danh sách giảng viên -----------
@@ -21,16 +22,13 @@ export function useTeamRequests(teamId) {
       return;
     }
 
-    console.log("📡 Gọi API lấy danh sách giảng viên...");
     try {
       setLoading(true);
       const res = await fetch("http://localhost:5000/api/lecturer-requests/lecturers", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      console.log("📥 Response status:", res.status);
       const data = await res.json();
-      console.log("📦 Response data:", data);
 
       if (res.status === 401) {
         toast.error("Token hết hạn hoặc không hợp lệ");
@@ -39,7 +37,6 @@ export function useTeamRequests(teamId) {
 
       if (data.success) {
         setLecturers(data.data || []);
-        console.log(`✅ Lấy được ${data.data?.length || 0} giảng viên`);
       } else {
         toast.error(data.message || "Không thể tải danh sách giảng viên");
       }
@@ -62,8 +59,6 @@ export function useTeamRequests(teamId) {
       return;
     }
 
-    console.log(`🚀 Gửi request: teamId=${teamId}, lecturerId=${lecturerId}`);
-
     try {
       setSending(true);
       const res = await fetch(
@@ -78,7 +73,6 @@ export function useTeamRequests(teamId) {
       );
 
       const data = await res.json();
-      console.log("📤 Response khi gửi request:", data);
 
       if (res.status === 403) {
         toast.error("Chỉ leader mới có quyền gửi yêu cầu!");
@@ -92,6 +86,15 @@ export function useTeamRequests(teamId) {
       if (data.success) {
         toast.success("✅ Đã gửi yêu cầu đến giảng viên!");
         setSentRequests((prev) => [...prev, lecturerId]);
+      } else if (data.message?.includes("Team này đã có giảng viên đồng ý")) {
+        toast.success("Nhóm đã có giảng viên hướng dẫn!");
+        // Cập nhật ngay approvedMentor
+        if (data.mentorName && data.mentorEmail) {
+          setApprovedMentor({
+            HoTen: data.mentorName,
+            Email: data.mentorEmail,
+          });
+        }
       } else {
         toast.error(data.message || "Gửi yêu cầu thất bại");
       }
@@ -103,19 +106,19 @@ export function useTeamRequests(teamId) {
     }
   };
 
-  // ----------- useEffect luôn fetch lecturers khi mount -----------
+  // ----------- useEffect luôn fetch lecturers khi mount hoặc teamId thay đổi -----------
   useEffect(() => {
-  // Chỉ gọi API khi có teamId hợp lệ
-  if (teamId) {
-    fetchLecturers();
-  }
-}, [teamId]); // ✅ Chạy lại mỗi khi teamId thay đổi
+    if (teamId) {
+      fetchLecturers();
+    }
+  }, [teamId]);
 
   return {
     lecturers,
     loading,
     sending,
     sentRequests,
+    approvedMentor,
     sendRequest,
     refetchLecturers: fetchLecturers,
   };

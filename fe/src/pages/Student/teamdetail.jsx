@@ -43,6 +43,7 @@ export default function TeamDetail() {
 
         if (data.success) {
           setTeam(data.team);
+          console.log("Team detail:", data.team);
         } else {
           toast.error(data.message || "Không thể tải thông tin nhóm");
         }
@@ -155,6 +156,8 @@ export default function TeamDetail() {
   };
 
 
+
+
   const handleLeave = async () => {
     await leaveTeam(teamId);
     navigate("/student", { state: { selectedMenu: "2" } });
@@ -264,9 +267,10 @@ export default function TeamDetail() {
               <span className="font-semibold text-gray-700">Giảng viên hướng dẫn:</span>
             </div>
             <p className="text-lg font-bold text-yellow-700 ml-7">
-              {team.mentorName || "Không có"}
+              {team.mentorName ? team.mentorName : "Không có"}
             </p>
           </Card>
+
         )}
 
         {/* Description */}
