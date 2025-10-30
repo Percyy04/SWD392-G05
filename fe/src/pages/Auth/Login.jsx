@@ -45,14 +45,17 @@ const Login = () => {
           case "Student":
             navigate("/student");
             break;
+          case "Lecturer":
+            navigate("/lecturer");
+            break;
           default:
             navigate("/");
         }
 
-        toast.success(data.message || " Login successfully",  {
-        duration: 2000,
-        position: "top-center", // 👈 vị trí hiển thị
-      });
+        toast.success(data.message || " Login successfully", {
+          duration: 2000,
+          position: "top-center", // 👈 vị trí hiển thị
+        });
       } else {
         toast.error(data.message || " Invalid email or password", { duration: 2000 });
       }
@@ -70,7 +73,7 @@ const Login = () => {
 
   return (
     <div className="flex min-h-screen">
-      
+
       <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

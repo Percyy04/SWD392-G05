@@ -87,26 +87,36 @@ router.post("/:teamId/request/:lecturerId", verifyToken, async (req, res) => {
 // ---------------------------
 router.get("/requests", verifyToken, verifyLecturer, async (req, res) => {
   try {
+    console.log("req.user:", req.user); // ✅ in ra xem có id không
     const requests = await teamModel.getRequestsForLecturer(req.user.id);
     res.status(200).json({ success: true, data: requests });
   } catch (err) {
-    console.error("❌ Error fetching requests:", err);
+    console.error("❌ Error fetching requests:", err); // xem chi tiết lỗi
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
 
 // ---------------------------
 // 🧩 4️⃣ Lecturer phản hồi request (accept/reject)
 // ---------------------------
 router.patch("/requests/:requestId/respond", verifyToken, verifyLecturer, async (req, res) => {
   try {
-    const { action } = req.body; // "accept" hoặc "reject"
+    console.log("Request params:", req.params);
+    console.log("Request body:", req.body);
+    console.log("Lecturer id:", req.user.id);
+
+    const { action } = req.body;
     const result = await teamModel.respondRequest(req.params.requestId, req.user.id, action);
+
+    console.log("Respond result:", result);
     res.status(200).json({ success: true, data: result });
   } catch (err) {
     console.error("❌ Error responding request:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
+
 
 module.exports = router;

@@ -6,7 +6,9 @@ import Signup from "./pages/Auth/Signup";
 import ResetPassword from "./pages/Auth/ResetPassword";
 import Admin from "./pages/Admin/Admin";
 import Student from "./pages/Student/student";
+import Lecturer from "./pages/Lecturer/lecturer";
 import TeamDetail from "./pages/Student/teamdetail";
+
 
 // 🛡️ ProtectedRoute: chỉ cho phép truy cập khi có token và role hợp lệ
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -51,6 +53,8 @@ const PublicRoute = ({ children }) => {
         return <Navigate to="/leader" replace />;
       case "Student":
         return <Navigate to="/student" replace />;
+      case "Lecturer":
+        return <Navigate to="/lecturer" replace />;
       default:
         return <Navigate to="/" replace />;
     }
@@ -97,6 +101,16 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/lecturer"
+          element={
+            <ProtectedRoute allowedRoles={["Lecturer"]}>
+              <Lecturer />
+            </ProtectedRoute>
+          }
+        />
+
 
         <Route
           path="/student/team/:teamId"

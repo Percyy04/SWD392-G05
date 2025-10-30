@@ -178,7 +178,83 @@ async sendRequestToLecturer(teamId, leaderId, lecturerId) {
   );
 
   return rows[0];
-}
+},
+
+async getRequestsForLecturer(lecturerId) {
+  const [rows] = await db.execute(`
+    SELECT tr.id AS requestId,
+           tr.teamId,
+           tr.status,
+           tr.createdAt,
+           tr.updatedAt,
+           t.TenTeam,
+           s.HoTen AS LeaderName
+    FROM TeamRequests tr
+    JOIN Team t ON tr.teamId = t.MaTeam
+    JOIN Student s ON t.LeaderID = s.MaSV
+    WHERE tr.lecturerId = ?
+    ORDER BY tr.createdAt DESC
+  `, [lecturerId]);
+
+  return rows;
+},
+
+async respondRequest(requestId, lecturerId, action) {
+  // 1️⃣ Chỉ cho phép accept hoặc reject
+  if (!["accept", "reject"].includes(action)) {
+    throw new Error("Invalid action");
+  }
+
+  // 2️⃣ Chuyển action thành status
+  const status = action === "accept" ? "accepted" : "rejected";
+
+  // 3️⃣ Cập nhật status cho request
+  const [result] = await db.execute(
+    `UPDATE TeamRequests
+     SET status = ?, updatedAt = NOW()
+     WHERE id = ? AND lecturerId = ?`,
+    [status, requestId, lecturerId]
+  );
+
+  if (result.affectedRows === 0) {
+    throw new Error("Request not found or you are not authorized");
+  }
+
+  // 4️⃣ Nếu accept, cập nhật luôn MentorID cho Team
+  if (status === "accepted") {
+    const [[request]] = await db.execute(
+      'SELECT teamId FROM TeamRequests WHERE id = ?',
+      [requestId]
+    );
+
+    if (request) {
+      await db.execute(
+        'UPDATE Team SET MentorID = ? WHERE MaTeam = ?',
+        [lecturerId, request.teamId]
+      );
+    }
+  }
+
+  // 5️⃣ Trả về dữ liệu request sau khi update (có thể dùng cho frontend Table)
+  const [updated] = await db.execute(
+    `SELECT tr.id AS requestId,
+            tr.teamId,
+            tr.status,
+            tr.createdAt,
+            tr.updatedAt,
+            t.TenTeam,
+            s.HoTen AS LeaderName
+     FROM TeamRequests tr
+     JOIN Team t ON tr.teamId = t.MaTeam
+     JOIN Student s ON t.LeaderID = s.MaSV
+     WHERE tr.id = ?`,
+    [requestId]
+  );
+
+  return updated[0];
+},
+
+
 
 };
 
