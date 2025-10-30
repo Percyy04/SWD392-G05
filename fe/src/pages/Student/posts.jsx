@@ -9,14 +9,24 @@ import {
   Tag,
   Spin,
   message,
-  Dropdown, // Thêm Dropdown cho menu Tùy chọn bài viết
+  Dropdown,
+  Space,
+  Badge,
+  Divider,
+  Empty,
 } from "antd";
 import {
   CommentOutlined,
   SendOutlined,
   DeleteOutlined,
   FileAddOutlined,
-  MoreOutlined, // Thêm MoreOutlined
+  MoreOutlined,
+  UserOutlined,
+  ClockCircleOutlined,
+  EditOutlined,
+  MessageOutlined,
+  PlusCircleOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 import { usePosts } from "../../../hooks/usePosts";
 
@@ -55,18 +65,18 @@ export default function Posts({ token, currentStudentId }) {
 
   const handleCreatePost = async () => {
     if (!title.trim() || !content.trim()) {
-      return message.warning("Please fill in all fields");
+      return message.warning("Vui lòng điền đầy đủ thông tin");
     }
     try {
       setSaving(true);
       await createPost(title, content);
-      await fetchPosts(); // Lấy lại danh sách posts sau khi tạo
+      await fetchPosts();
       setModalVisible(false);
       setTitle("");
       setContent("");
-      message.success("✅ Post created successfully");
+      message.success("✅ Tạo bài viết thành công");
     } catch (err) {
-      message.error(err.message || "Failed to create post");
+      message.error(err.message || "Tạo bài viết thất bại");
     } finally {
       setSaving(false);
     }
@@ -74,24 +84,23 @@ export default function Posts({ token, currentStudentId }) {
   
   // ---------------- Delete Post ----------------
   const handleDeletePost = async (postId, authorId) => {
-      // ✅ Kiểm tra quyền: Chỉ cho phép xóa nếu là chính chủ
       if (authorId !== currentStudentId) {
-          return message.warning("You can only delete your own posts");
+          return message.warning("Bạn chỉ có thể xóa bài viết của mình");
       }
 
       Modal.confirm({
-          title: "Delete Post",
-          content: "Are you sure you want to delete this post?",
-          okText: "Yes",
+          title: "Xóa bài viết",
+          content: "Bạn có chắc chắn muốn xóa bài viết này?",
+          okText: "Xóa",
           okType: "danger",
-          cancelText: "No",
+          cancelText: "Hủy",
           async onOk() {
               try {
                   await deletePost(postId);
-                  await fetchPosts(); // Lấy lại danh sách posts sau khi xóa
-                  message.success("🗑️ Post deleted successfully");
+                  await fetchPosts();
+                  message.success("🗑️ Đã xóa bài viết thành công");
               } catch (err) {
-                  message.error(err.message || "Failed to delete post");
+                  message.error(err.message || "Xóa bài viết thất bại");
               }
           },
       });
@@ -104,6 +113,13 @@ export default function Posts({ token, currentStudentId }) {
   const [loadingComments, setLoadingComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
+  
+  // ✅ Track comments count for each post
+  const [postsCommentsCount, setPostsCommentsCount] = useState(() => {
+    // Load từ localStorage khi khởi tạo
+    const saved = localStorage.getItem('postsCommentsCount');
+    return saved ? JSON.parse(saved) : {};
+  });
 
   const openCommentModal = async (post) => {
     setSelectedPost(post);
@@ -114,8 +130,14 @@ export default function Posts({ token, currentStudentId }) {
       // ✅ Lấy comment từ API
       const fetchedComments = await fetchComments(post.id);
       setComments(fetchedComments);
+      
+      // ✅ Cập nhật số lượng comments cho post này
+      setPostsCommentsCount(prev => ({
+        ...prev,
+        [post.id]: fetchedComments.length
+      }));
     } catch (err) {
-      message.error("Failed to load comments");
+      message.error("Không thể tải bình luận");
       console.error(err);
     } finally {
       setLoadingComments(false);
@@ -123,42 +145,52 @@ export default function Posts({ token, currentStudentId }) {
   };
 
   const handleSendComment = async () => {
-    if (!newComment.trim()) return message.warning("Please enter a comment");
+    if (!newComment.trim()) return message.warning("Vui lòng nhập nội dung bình luận");
     try {
       setSendingComment(true);
       const commentObj = await createComment(selectedPost.id, newComment);
-      // ✅ Cập nhật state comments thay vì gọi lại API
-      setComments((prev) => [...prev, commentObj]); 
+      setComments((prev) => [...prev, commentObj]);
+      
+      // ✅ Cập nhật số lượng comments
+      setPostsCommentsCount(prev => ({
+        ...prev,
+        [selectedPost.id]: (prev[selectedPost.id] || 0) + 1
+      }));
+      
       setNewComment("");
-      message.success("💬 Comment added successfully");
+      message.success("💬 Đã thêm bình luận thành công");
     } catch (err) {
-      message.error(err.message || "Failed to add comment");
+      message.error(err.message || "Thêm bình luận thất bại");
     } finally {
       setSendingComment(false);
     }
   };
 
   const handleDeleteComment = async (commentId, authorId) => {
-    // ✅ Kiểm tra quyền: Chỉ cho phép xóa nếu là chính chủ
     if (authorId !== currentStudentId) {
-        return message.warning("You can only delete your own comment");
+        return message.warning("Bạn chỉ có thể xóa bình luận của mình");
     }
     
     Modal.confirm({
-      title: "Delete Comment",
-      content: "Are you sure you want to delete this comment?",
-      okText: "Yes",
+      title: "Xóa bình luận",
+      content: "Bạn có chắc chắn muốn xóa bình luận này?",
+      okText: "Xóa",
       okType: "danger",
-      cancelText: "No",
+      cancelText: "Hủy",
       async onOk() {
         try {
-          // ✅ API route dùng postId và commentId
           await deleteComment(selectedPost.id, commentId);
-          // ✅ Cập nhật state: Lọc bỏ comment đã xóa
           setComments((prev) => prev.filter((c) => c.id !== commentId));
-          message.success("🗑️ Comment deleted successfully");
+          
+          // ✅ Cập nhật số lượng comments
+          setPostsCommentsCount(prev => ({
+            ...prev,
+            [selectedPost.id]: Math.max((prev[selectedPost.id] || 1) - 1, 0)
+          }));
+          
+          message.success("🗑️ Đã xóa bình luận thành công");
         } catch (err) {
-          message.error(err.message || "Failed to delete comment");
+          message.error(err.message || "Xóa bình luận thất bại");
         }
       },
     });
@@ -169,109 +201,236 @@ export default function Posts({ token, currentStudentId }) {
     if (token) fetchPosts();
   }, [token]);
 
-  return (
-    <div className="p-6">
-      <Card
-        title="📢 Posts & Announcements"
-        extra={
-          <Button type="primary" icon={<FileAddOutlined />} onClick={openCreatePostModal} className="bg-green-600">
-            Create Post
-          </Button>
-        }
-        className="bg-white border border-gray-200 shadow-sm"
-      >
-        {loadingPosts ? (
-          <div className="flex justify-center py-10">
-            <Spin size="large" />
-          </div>
-        ) : posts.length === 0 ? (
-          <div className="text-center text-gray-500 py-10">No posts available yet.</div>
-        ) : (
-          <div className="space-y-4">
-            {posts.map((post) => (
-              <Card
-                key={post.id}
-                size="small"
-                className="bg-gray-50 border border-gray-200 hover:border-green-400 transition-all"
-              >
-                <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                        <h4 className="text-gray-900 font-semibold">{post.title}</h4>
-                        <p className="text-gray-600 text-sm mt-1 whitespace-pre-line">{post.content}</p>
+  // ✅ Lưu comments count vào localStorage khi thay đổi
+  useEffect(() => {
+    localStorage.setItem('postsCommentsCount', JSON.stringify(postsCommentsCount));
+  }, [postsCommentsCount]);
 
-                        <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                            <span>
-                                👤 {post.authorName || "Unknown"}{" "}
-                                {post.authorRole && (
-                                <Tag
-                                    color={post.authorRole === "Admin" ? "red" : "blue"}
-                                    className="ml-1"
-                                >
-                                    {post.authorRole}
-                                </Tag>
-                                )}
-                            </span>
-                            <span className="text-xs text-gray-400">
-                                {convertToVietnamTime(post.createdAt)}
-                            </span>
-                            <Button
-                                type="link"
-                                size="small"
-                                icon={<CommentOutlined />}
-                                onClick={() => openCommentModal(post)}
-                                className="text-gray-500 hover:text-green-600"
-                            >
-                                Comments ({post.comments?.length || 0})
-                            </Button>
-                        </div>
-                    </div>
-                    
-                    {/* ✅ Menu Tùy chọn (chỉ hiển thị nếu là chính chủ) */}
-                    {post.authorId === currentStudentId && (
-                        <Dropdown
-                            menu={{
-                                items: [
-                                    // Loại bỏ chức năng Edit/Update
-                                    {
-                                        key: "2",
-                                        label: "Delete",
-                                        danger: true,
-                                        icon: <DeleteOutlined />,
-                                        onClick: () => handleDeletePost(post.id, post.authorId),
-                                    },
-                                ],
-                            }}
-                        >
-                            <Button type="text" icon={<MoreOutlined />} />
-                        </Dropdown>
-                    )}
-                </div>
-              </Card>
-            ))}
+  return (
+    <div className="max-w-6xl mx-auto p-6">
+      {/* Header Section */}
+      <div className="mb-6">
+        <Card 
+          className="bg-gradient-to-r from-blue-500 to-purple-600 border-0 shadow-lg"
+          bodyStyle={{ padding: '24px' }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-white rounded-full p-3">
+                <MessageOutlined className="text-2xl text-blue-600" />
+              </div>
+              <div className="text-white">
+                <h2 className="text-2xl font-bold mb-1">Bảng Tin & Thông Báo</h2>
+                <p className="text-blue-100">Chia sẻ và trao đổi thông tin với mọi người</p>
+              </div>
+            </div>
+            <Button 
+              type="primary" 
+              size="large"
+              icon={<PlusCircleOutlined />} 
+              onClick={openCreatePostModal}
+              className="bg-white text-blue-600 hover:bg-blue-50 border-0 shadow-md font-semibold"
+            >
+              Tạo bài viết
+            </Button>
           </div>
+        </Card>
+      </div>
+
+      {/* Posts List */}
+      <div className="space-y-4">
+        {loadingPosts ? (
+          <Card className="shadow-sm">
+            <div className="flex justify-center py-20">
+              <Spin size="large" tip="Đang tải bài viết..." />
+            </div>
+          </Card>
+        ) : posts.length === 0 ? (
+          <Card className="shadow-sm">
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={
+                <span className="text-gray-500">
+                  Chưa có bài viết nào. Hãy là người đầu tiên tạo bài viết!
+                </span>
+              }
+            >
+              <Button 
+                type="primary" 
+                icon={<PlusCircleOutlined />}
+                onClick={openCreatePostModal}
+              >
+                Tạo bài viết đầu tiên
+              </Button>
+            </Empty>
+          </Card>
+        ) : (
+          posts.map((post) => (
+            <Card
+              key={post.id}
+              className="shadow-md hover:shadow-xl transition-all duration-300 border-0"
+              bodyStyle={{ padding: '24px' }}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex gap-4 flex-1">
+                  {/* Avatar */}
+                  <Avatar 
+                    size={56} 
+                    icon={<UserOutlined />}
+                    className={`${
+                      post.authorRole === "Admin" 
+                        ? "bg-gradient-to-br from-red-500 to-pink-600" 
+                        : "bg-gradient-to-br from-green-500 to-emerald-600"
+                    } flex-shrink-0`}
+                  >
+                    {post.authorName?.[0] || "U"}
+                  </Avatar>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    {/* Author Info */}
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <span className="font-bold text-gray-900 text-lg">
+                        {post.authorName || "Unknown"}
+                      </span>
+                      {post.authorRole && (
+                        <Tag 
+                          color={post.authorRole === "Admin" ? "red" : "green"}
+                          className="px-3 py-0.5"
+                        >
+                          {post.authorRole === "Admin" ? "Quản trị viên" : "Sinh viên"}
+                        </Tag>
+                      )}
+                      <span className="text-gray-400 text-sm flex items-center gap-1">
+                        <ClockCircleOutlined />
+                        {convertToVietnamTime(post.createdAt)}
+                      </span>
+                    </div>
+
+                    {/* Post Title & Content */}
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">
+                      {post.title}
+                    </h3>
+                    <p className="text-gray-700 whitespace-pre-line leading-relaxed mb-4">
+                      {post.content}
+                    </p>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-3">
+                      <Button
+                        type="text"
+                        icon={<CommentOutlined />}
+                        onClick={() => openCommentModal(post)}
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-semibold"
+                      >
+                        <Badge 
+                          count={postsCommentsCount[post.id] ?? post.comments?.length ?? 0} 
+                          showZero
+                          className="ml-2"
+                        >
+                          <span className="ml-1">Bình luận</span>
+                        </Badge>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* More Options (chỉ hiển thị nếu là chính chủ) */}
+                {post.authorId === currentStudentId && (
+                  <Dropdown
+                    menu={{
+                      items: [
+                        {
+                          key: "delete",
+                          label: "Xóa bài viết",
+                          danger: true,
+                          icon: <DeleteOutlined />,
+                          onClick: () => handleDeletePost(post.id, post.authorId),
+                        },
+                      ],
+                    }}
+                    trigger={['click']}
+                  >
+                    <Button 
+                      type="text" 
+                      icon={<MoreOutlined />}
+                      className="hover:bg-gray-100"
+                    />
+                  </Dropdown>
+                )}
+              </div>
+            </Card>
+          ))
         )}
-      </Card>
+      </div>
 
       {/* Create Post Modal */}
       <Modal
-        title="📝 Create Post"
+        title={
+          <Space>
+            <EditOutlined className="text-blue-600" />
+            <span className="text-xl font-bold">Tạo bài viết mới</span>
+          </Space>
+        }
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         onOk={handleCreatePost}
         confirmLoading={saving}
-        okText="Create"
+        okText="Tạo bài viết"
+        cancelText="Hủy"
+        width={700}
+        okButtonProps={{ 
+          size: 'large',
+          icon: <PlusCircleOutlined />
+        }}
+        cancelButtonProps={{ size: 'large' }}
       >
-        <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} className="mb-4" />
-        <Input.TextArea placeholder="Content" value={content} onChange={(e) => setContent(e.target.value)} rows={4} />
+        <Divider />
+        <div className="space-y-4">
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">
+              Tiêu đề <span className="text-red-500">*</span>
+            </label>
+            <Input 
+              placeholder="Nhập tiêu đề bài viết..." 
+              value={title} 
+              onChange={(e) => setTitle(e.target.value)}
+              size="large"
+              className="border-gray-300"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">
+              Nội dung <span className="text-red-500">*</span>
+            </label>
+            <Input.TextArea 
+              placeholder="Nhập nội dung bài viết..." 
+              value={content} 
+              onChange={(e) => setContent(e.target.value)} 
+              rows={6}
+              className="border-gray-300"
+            />
+          </div>
+        </div>
       </Modal>
 
       {/* Comment Modal */}
       <Modal
         title={
-            <div>
-                <CommentOutlined className="mr-2" />
-                Comments - {selectedPost?.title}
-            </div>
+          <div className="flex items-center justify-between">
+            <Space>
+              <CommentOutlined className="text-blue-600 text-xl" />
+              <div>
+                <div className="text-lg font-bold">Bình luận</div>
+                <div className="text-sm text-gray-500 font-normal">
+                  {selectedPost?.title}
+                </div>
+              </div>
+            </Space>
+            <Badge 
+            />
+          </div>
         }
         open={commentModalVisible}
         onCancel={() => {
@@ -281,51 +440,85 @@ export default function Posts({ token, currentStudentId }) {
           setNewComment("");
         }}
         footer={null}
-        width={600}
+        width={800}
       >
+        <Divider className="mt-2" />
+        
         {loadingComments ? (
-          <div className="flex justify-center py-10">
-            <Spin />
+          <div className="flex justify-center py-20">
+            <Spin size="large" tip="Đang tải bình luận..." />
           </div>
         ) : (
           <>
             {/* Comments List */}
-            <div className="max-h-96 overflow-y-auto mb-4">
+            <div className="max-h-[500px] overflow-y-auto mb-6 pr-2">
               {comments.length === 0 ? (
-                <div className="text-center text-gray-400 py-8">
-                  No comments yet. Be the first to comment!
-                </div>
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description="Chưa có bình luận nào. Hãy là người đầu tiên bình luận!"
+                  className="py-12"
+                />
               ) : (
                 <List
                   dataSource={comments}
                   renderItem={(comment) => (
                     <List.Item
                       key={comment.id}
-                      actions={[
-                        // ✅ Chỉ hiển thị nút Delete nếu là chính chủ comment
-                        comment.authorId === currentStudentId && (
-                          <Button
-                            type="link"
-                            danger
-                            size="small"
-                            icon={<DeleteOutlined />}
-                            onClick={() => handleDeleteComment(comment.id, comment.authorId)}
-                          >
-                            Delete
-                          </Button>
-                        ),
-                      ]}
+                      className="border-0 border-b border-gray-100 hover:bg-gray-50 transition-colors px-4 py-4"
+                      actions={
+                        comment.authorId === currentStudentId
+                          ? [
+                              <Button
+                                type="text"
+                                danger
+                                size="small"
+                                icon={<DeleteOutlined />}
+                                onClick={() => handleDeleteComment(comment.id, comment.authorId)}
+                              >
+                                Xóa
+                              </Button>,
+                            ]
+                          : []
+                      }
                     >
                       <List.Item.Meta
-                        avatar={<Avatar className="bg-green-600">{comment.authorName?.[0] || "U"}</Avatar>}
+                        avatar={
+                          <Avatar 
+                            size={48} 
+                            icon={<UserOutlined />}
+                            className={
+                              comment.authorRole === "Admin"
+                                ? "bg-gradient-to-br from-red-500 to-pink-600"
+                                : "bg-gradient-to-br from-green-500 to-emerald-600"
+                            }
+                          >
+                            {comment.authorName?.[0] || "U"}
+                          </Avatar>
+                        }
                         title={
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold">{comment.authorName || "Unknown"}</span>
-                            {comment.authorRole && <Tag color={comment.authorRole === "Admin" ? "red" : "blue"}>{comment.authorRole}</Tag>}
-                            <span className="text-xs text-gray-400">{convertToVietnamTime(comment.createdAt)}</span>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-gray-900">
+                              {comment.authorName || "Unknown"}
+                            </span>
+                            {comment.authorRole && (
+                              <Tag 
+                                color={comment.authorRole === "Admin" ? "red" : "green"}
+                                className="px-2"
+                              >
+                                {comment.authorRole === "Admin" ? "Quản trị viên" : "Sinh viên"}
+                              </Tag>
+                            )}
+                            <span className="text-xs text-gray-400 flex items-center gap-1">
+                              <ClockCircleOutlined />
+                              {convertToVietnamTime(comment.createdAt)}
+                            </span>
                           </div>
                         }
-                        description={<p className="text-gray-700 whitespace-pre-line">{comment.content}</p>}
+                        description={
+                          <p className="text-gray-700 whitespace-pre-line mt-2 leading-relaxed">
+                            {comment.content}
+                          </p>
+                        }
                       />
                     </List.Item>
                   )}
@@ -334,29 +527,43 @@ export default function Posts({ token, currentStudentId }) {
             </div>
 
             {/* Add Comment Input */}
-            <div className="border-t pt-4">
-              <div className="flex gap-2">
-                <Input.TextArea
-                  placeholder="Write a comment..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  rows={2}
-                  onPressEnter={(e) => {
-                    if (e.ctrlKey || e.metaKey) handleSendComment(); // Thêm metaKey cho Mac
-                  }}
-                />
-                <Button
-                  type="primary"
-                  icon={<SendOutlined />}
-                  onClick={handleSendComment}
-                  loading={sendingComment}
-                  className="bg-green-600"
-                >
-                  Send
-                </Button>
+            <Card className="bg-gray-50 border-2 border-blue-200">
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <Avatar 
+                    size={40} 
+                    icon={<UserOutlined />}
+                    className="bg-gradient-to-br from-green-500 to-emerald-600 flex-shrink-0"
+                  />
+                  <Input.TextArea
+                    placeholder="Viết bình luận của bạn..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    rows={3}
+                    className="flex-1"
+                    onPressEnter={(e) => {
+                      if (e.ctrlKey || e.metaKey) handleSendComment();
+                    }}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500">
+                    💡 Nhấn <kbd className="px-2 py-1 bg-gray-200 rounded">Ctrl</kbd> + <kbd className="px-2 py-1 bg-gray-200 rounded">Enter</kbd> để gửi
+                  </p>
+                  <Button
+                    type="primary"
+                    size="large"
+                    icon={<SendOutlined />}
+                    onClick={handleSendComment}
+                    loading={sendingComment}
+                    className="bg-gradient-to-r from-blue-500 to-purple-600 border-0"
+                  >
+                    Gửi bình luận
+                  </Button>
+                </div>
               </div>
-              <p className="text-xs text-gray-400 mt-1">Press Ctrl/Cmd+Enter to send</p>
-            </div>
+            </Card>
           </>
         )}
       </Modal>
