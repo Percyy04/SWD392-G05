@@ -134,7 +134,7 @@ export default function TeamDetail() {
 
   const handleLeave = async () => {
     await leaveTeam(teamId);
-    navigate("/student/");
+    navigate("/student", { state: { selectedMenu: "2" } });
   };
 
   if (loading) return <p>Loading team details...</p>;
@@ -157,7 +157,7 @@ export default function TeamDetail() {
             ) : (
               <Tag color="green">✅ You have already voted for leader</Tag>
             )}
-            <Button className="mt-2" onClick={handleViewVotes}>
+            <Button className="mt-2 ml-2" onClick={handleViewVotes}>
   Xem kết quả vote
 </Button>
 

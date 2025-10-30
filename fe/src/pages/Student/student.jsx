@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout, Menu, Button, Avatar, Dropdown } from "antd";
 import { MenuFoldOutlined, MenuUnfoldOutlined, DashboardOutlined, TeamOutlined, FileTextOutlined, LogoutOutlined } from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useStudentDashboard } from "../../../hooks/useStudentDashboard";
 
@@ -13,10 +13,20 @@ const { Header, Sider, Content } = Layout;
 
 export default function Student() {
   const [collapsed, setCollapsed] = useState(false);
-  const [selectedMenu, setSelectedMenu] = useState("1");
+  const [selectedMenu, setSelectedMenu] = useState("2");
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { student, teams, loading, error } = useStudentDashboard(true);
+
+  // ✅ Handle navigation state to set selected menu
+  useEffect(() => {
+    if (location.state?.selectedMenu) {
+      setSelectedMenu(location.state.selectedMenu);
+      // Clear the state after using it
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // ---------------- Logout ----------------
   const handleLogout = async () => {
@@ -49,7 +59,7 @@ export default function Student() {
   };
 
   const menuItems = [
-    { key: "1", icon: <DashboardOutlined />, label: "Dashboard" },
+    // { key: "1", icon: <DashboardOutlined />, label: "Dashboard" },
     { key: "2", icon: <TeamOutlined />, label: "Teams" },
     { key: "3", icon: <FileTextOutlined />, label: "Posts" }, // đổi label cho rõ
   ];
@@ -59,8 +69,8 @@ export default function Student() {
     if (error) return <p className="text-red-600">{error}</p>;
 
     switch (selectedMenu) {
-      case "1":
-        return <Dashboard student={student} />;
+      // case "1":
+      //   return <Dashboard student={student} />;
       case "2":
         return <Teams student={student} teams={teams} />;
       case "3":
