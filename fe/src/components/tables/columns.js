@@ -1,7 +1,7 @@
 import { Tag, Button, Badge, Dropdown, Avatar, message } from "antd"
 import { MoreOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons"
 
-export const teamsColumns = [
+export const TeamsColumns = [
   {
     title: "Team Name",
     dataIndex: "teamName",

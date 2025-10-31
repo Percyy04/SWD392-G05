@@ -1,16 +1,22 @@
 import { useState } from "react";
-import { Form, Input, Button, Checkbox } from "antd";
+import { Form, Input, Button, Checkbox, Select } from "antd";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { Mail, Lock, User, IdCard, Github, Chrome, Apple, Shield } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 
+const { Option } = Select;
+
 const SignUp = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const majors = ["SE", "AI", "SA", "SS", "IB"];
+  const statuses = ["K15", "K16", "K17", "K18", "K19", "K20", "K21", "K22"];
+
   const onFinish = async (values) => {
+    console.log("Form values:", values);
     setLoading(true);
 
     try {
@@ -22,21 +28,24 @@ const SignUp = () => {
           full_name: values.fullname,
           email: values.email,
           password: values.password,
+          major: values.major,
+          status: values.status,
         }),
       });
 
       let data;
       try {
         data = await res.json();
+        console.log("Signup response:", data); // debug
       } catch {
         data = { success: false, message: `Server returned ${res.status}` };
       }
 
       if (data.success) {
-        toast.success(data.message || "Account created successfully!");
+        toast.success(data.message || "Account created successfully!", { duration: 2000 });
         setTimeout(() => navigate("/"), 1000);
       } else {
-        toast.error(data.message || `Error ${res.status}`);
+        toast.error(data.message || `Error ${res.status}`, { duration: 2000 });
       }
     } catch (err) {
       console.error("Signup error:", err);
@@ -52,6 +61,7 @@ const SignUp = () => {
 
   return (
     <div className="flex min-h-screen">
+      <Toaster position="top-right" reverseOrder={false} />
       <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -109,6 +119,19 @@ const SignUp = () => {
               >
                 <Input prefix={<Mail className="w-4 h-4 text-gray-400" />} placeholder="user@example.com" size="large" className="rounded-lg" />
               </Form.Item>
+
+              <Form.Item label="Major" name="major" initialValue={majors[0]} rules={[{ required: true, message: "Please select your major!" }]}>
+                <Select placeholder="Select your major" size="large" className="rounded-lg">
+                  {majors.map((m) => <Option key={m} value={m}>{m}</Option>)}
+                </Select>
+              </Form.Item>
+
+              <Form.Item label="Status" name="status" initialValue={statuses[0]} rules={[{ required: true, message: "Please select your status!" }]}>
+                <Select placeholder="Select your status" size="large" className="rounded-lg">
+                  {statuses.map((s) => <Option key={s} value={s}>{s}</Option>)}
+                </Select>
+              </Form.Item>
+
 
               <Form.Item label="Password" name="password" rules={[{ required: true, message: "Please enter your password!" }]}>
                 <Input.Password prefix={<Lock className="w-4 h-4 text-gray-400" />} placeholder="••••••••" size="large" className="rounded-lg" />
