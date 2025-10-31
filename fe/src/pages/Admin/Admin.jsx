@@ -109,8 +109,8 @@ const renderContent = () => {
 
   const dropdownMenu = {
     items: [
-      { key: "1", label: "Profile" },
-      { key: "2", label: "Settings" },
+      // { key: "1", label: "Profile" },
+      // { key: "2", label: "Settings" },
       { key: "3", label: "Logout", danger: true, icon: <LogoutOutlined /> },
     ],
     onClick: ({ key }) => {

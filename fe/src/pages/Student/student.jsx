@@ -59,7 +59,7 @@ export default function Student() {
 
   const dropdownMenu = {
     items: [
-      { key: "1", label: "Profile" },
+      // { key: "1", label: "Profile" },
       { key: "2", label: "Logout", danger: true, icon: <LogoutOutlined /> },
     ],
     onClick: ({ key }) => {
