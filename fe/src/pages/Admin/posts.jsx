@@ -83,11 +83,7 @@ export function Posts({ token, currentAdminId }) {
   };
   
   // ---------------- Delete Post ----------------
-  const handleDeletePost = async (postId, authorId) => {
-      if (authorId !== currentAdminId) {
-          return message.warning("Bạn chỉ có thể xóa bài viết của mình");
-      }
-
+  const handleDeletePost = async (postId) => {
       Modal.confirm({
           title: "Xóa bài viết",
           content: "Bạn có chắc chắn muốn xóa bài viết này?",
@@ -166,11 +162,7 @@ export function Posts({ token, currentAdminId }) {
     }
   };
 
-  const handleDeleteComment = async (commentId, authorId) => {
-    if (authorId !== currentAdminId) {
-        return message.warning("Bạn chỉ có thể xóa bình luận của mình");
-    }
-    
+  const handleDeleteComment = async (commentId) => {
     Modal.confirm({
       title: "Xóa bình luận",
       content: "Bạn có chắc chắn muốn xóa bình luận này?",
@@ -343,29 +335,27 @@ export function Posts({ token, currentAdminId }) {
                   </div>
                 </div>
                 
-                {/* More Options (chỉ hiển thị nếu là chính chủ) */}
-                {post.authorId === currentAdminId && (
-                  <Dropdown
-                    menu={{
-                      items: [
-                        {
-                          key: "delete",
-                          label: "Xóa bài viết",
-                          danger: true,
-                          icon: <DeleteOutlined />,
-                          onClick: () => handleDeletePost(post.id, post.authorId),
-                        },
-                      ],
-                    }}
-                    trigger={['click']}
-                  >
-                    <Button 
-                      type="text" 
-                      icon={<MoreOutlined />}
-                      className="hover:bg-gray-100"
-                    />
-                  </Dropdown>
-                )}
+                {/* More Options - Admin có thể xóa tất cả bài viết */}
+                <Dropdown
+                  menu={{
+                    items: [
+                      {
+                        key: "delete",
+                        label: "Xóa bài viết",
+                        danger: true,
+                        icon: <DeleteOutlined />,
+                        onClick: () => handleDeletePost(post.id),
+                      },
+                    ],
+                  }}
+                  trigger={['click']}
+                >
+                  <Button 
+                    type="text" 
+                    icon={<MoreOutlined />}
+                    className="hover:bg-gray-100"
+                  />
+                </Dropdown>
               </div>
             </Card>
           ))
@@ -473,21 +463,17 @@ export function Posts({ token, currentAdminId }) {
                     <List.Item
                       key={comment.id}
                       className="border-0 border-b border-gray-100 hover:bg-gray-50 transition-colors px-4 py-4"
-                      actions={
-                        comment.authorId === currentAdminId
-                          ? [
-                              <Button
-                                type="text"
-                                danger
-                                size="small"
-                                icon={<DeleteOutlined />}
-                                onClick={() => handleDeleteComment(comment.id, comment.authorId)}
-                              >
-                                Xóa
-                              </Button>,
-                            ]
-                          : []
-                      }
+                      actions={[
+                        <Button
+                          type="text"
+                          danger
+                          size="small"
+                          icon={<DeleteOutlined />}
+                          onClick={() => handleDeleteComment(comment.id)}
+                        >
+                          Xóa
+                        </Button>,
+                      ]}
                     >
                       <List.Item.Meta
                         avatar={
